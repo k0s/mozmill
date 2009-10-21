@@ -39,6 +39,7 @@ import os
 import sys
 import copy
 import socket
+import imp
 from datetime import datetime, timedelta
 try:
     import json
@@ -191,6 +192,7 @@ class MozMillRestart(MozMill):
         super(MozMillRestart, self).__init__(*args, **kwargs)
         self.listeners = []
         self.global_listeners = []
+        self.python_callbacks = []
     
     def add_listener(self, callback, **kwargs):
         self.listeners.append((callback, kwargs,))
@@ -205,6 +207,20 @@ class MozMillRestart(MozMill):
                                        cmdargs=["-jsbridge", str(self.jsbridge_port)])
         
         self.profile = profile; self.runner = runner
+    
+    def fire_python_callback(self, method, arg):
+        meth = getattr(self.python_callbacks_module, method)
+        try:
+            meth(arg)
+        except Exception, e:
+            return False
+        return True
+    
+    def firePythonCallback_listener(self, obj):
+        if obj['fire_now']:
+            self.fire_python_callback(obj['method'], obj['arg'])
+        else:
+            self.python_callbacks.append(obj)
         
     def start_runner(self):
         self.runner.start()
@@ -269,6 +285,10 @@ class MozMillRestart(MozMill):
         self.add_listener(self.persist_listener, eventType="mozmill.persist")
         self.add_listener(self.endRunner_listener, eventType='mozmill.endRunner')
         
+        if os.path.isfile(os.path.join(test_dir, 'callbacks.py')):
+            name, f, pathname, description = ("callbacks",) + imp.find_module("callbacks", test_dir)
+            self.python_callbacks_module = imp.load_module(name, f, pathname, description)
+        
         for test in tests:
             frame = self.start_runner()
             self.endRunnerCalled = False
@@ -279,8 +299,12 @@ class MozMillRestart(MozMill):
             while not self.endRunnerCalled:
                 sleep(.25)
             self.stop_runner()
+            for callback in self.python_callbacks:
+                self.fire_python_callback(obj['method'], obj['arg'])
+            self.python_callbacks = []
             sleep(2)
-            
+        
+        self.python_callbacks_module = None    
         
         # Reset the profile.
         profile = self.runner.profile
@@ -302,6 +326,7 @@ class MozMillRestart(MozMill):
                      if d.startswith('test') and os.path.isdir(os.path.join(test_dir, d))]
         
         self.add_listener(self.endTest_listener, eventType='mozmill.endTest')
+        self.add_listener(self.firePythonCallback_listener, eventType='mozmill.firePythonCallback')
         # self.add_listener(self.endRunner_listener, eventType='mozmill.endRunner')
 
         if len(test_dirs) is 0:
