@@ -19,10 +19,6 @@ function isAccel(e){
 //window onkeypress handler for various keyboard
 //shortcuts
 window.onkeypress = function(e){
-  //if a test is in the middle of running, don't allow shortcuts to go through
-  if ($("#runningStatus")[0].innerHTML.indexOf("Running") != -1){
-    return;
-  }
   if (isAccel(e)){ 
     switch(String.fromCharCode(e.charCode).toLowerCase()){
       case 'z':
@@ -36,25 +32,13 @@ window.onkeypress = function(e){
         e.preventDefault();
         align();
       break;
-      case 'f':
+      case 'a':
         e.preventDefault();
-        showFileDialog();
-      break;
-      case 't':
-        e.preventDefault();
-        showTestDialog();
+        showFileMenu();
       break;
       case 'p':
         e.preventDefault();
         showOptionDialog();
-      break;
-      case 'i':
-        e.preventDefault();
-        showInspectDialog();
-      break;
-      case 'd':
-        e.preventDefault();
-        showRecordDialog();
       break;
       case 'o':
         e.preventDefault();
@@ -68,7 +52,11 @@ window.onkeypress = function(e){
         e.preventDefault();
         runEditor();
       break;
-      case 'e':
+      case 'd':
+        e.preventDefault();
+        MozMillrec.toggle();
+      break;
+      case 'v':
         e.preventDefault();
         saveAsFile();
       break;
@@ -76,24 +64,21 @@ window.onkeypress = function(e){
         e.preventDefault();
         saveFile();
       break;
-      case 'w':
+      case 'c':
         e.preventDefault();
         closeFile();
       break;
       case 'n':
         e.preventDefault();
-        openNewWindow();
+        newTemplate();
+      break;
+      case 't':
+        e.preventDefault();
+        runDirectory();
       break;
       case 'l':
         e.preventDefault();
         logicalClear();
-      break;
-      case 'm':
-        e.preventDefault();
-        genBoiler();
-      break;
-      case 'k':
-        toggleHideEditor();
       break;
       case '1':
         e.preventDefault();
