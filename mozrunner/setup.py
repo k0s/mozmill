@@ -44,7 +44,7 @@ summ = """Reliable start/stop/configuration of Mozilla Applications (Firefox, Th
 PACKAGE_NAME = "mozrunner"
 PACKAGE_VERSION = "2.4.4b1"
 
-deps = []
+deps = ['mozprocess', 'mozprofile']
 
 if not sys.version.startswith('2.6'):
     deps.append('simplejson')
