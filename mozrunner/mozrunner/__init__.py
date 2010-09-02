@@ -47,7 +47,7 @@ import optparse
 from utils import findInPath
 from mozprocess import killableprocess
 from mozprocess.kill import kill_process_by_name
-
+from mozprofile import *
 
 class Runner(object):
     """Handles all running operations. Finds bins, runs and kills the process."""
