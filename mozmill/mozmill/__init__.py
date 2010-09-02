@@ -136,7 +136,7 @@ class MozMill(object):
     report_type = 'mozmill-test'
 
     def __init__(self,
-                 runner_class=mozprofile.FirefoxRunner, 
+                 runner_class=mozrunner.FirefoxRunner, 
                  profile_class=mozprofile.FirefoxProfile,
                  jsbridge_port=24242,
                  jsbridge_timeout=60):
@@ -713,7 +713,7 @@ class CLI(jsbridge.CLI):
 
     def __init__(self, *args, **kwargs):
         jsbridge.CLI.__init__(self, *args, **kwargs)
-        self.mozmill = self.mozmill_class(runner_class=mozprofile.FirefoxRunner,
+        self.mozmill = self.mozmill_class(runner_class=mozrunner.FirefoxRunner,
                                           profile_class=mozprofile.FirefoxProfile,
                                           jsbridge_port=int(self.options.port),
                                           jsbridge_timeout=self.options.timeout,
