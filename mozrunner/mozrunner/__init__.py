@@ -47,6 +47,7 @@ import optparse
 from utils import findInPath
 from mozprocess import killableprocess
 from mozprocess.kill import kill_process_by_name
+from mozprocess.pid import get_pids
 from mozprofile import *
 
 class Runner(object):

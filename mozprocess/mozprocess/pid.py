@@ -41,6 +41,7 @@
 
 import os
 import subprocess
+import sys
 
 def get_pids(name, minimun_pid=0):
   """Get all the pids matching name, exclude any pids below minimum_pid."""
