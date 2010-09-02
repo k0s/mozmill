@@ -37,289 +37,16 @@
 #
 # ***** END LICENSE BLOCK *****
 
+__all__ = ['Runner', 'ThunderbirdRunner', 'FirefoxRunner', 'CLI', 'cli']
+
 import os
 import sys
-import copy
-import tempfile
 import signal
-import commands
-import zipfile
 import optparse
-import killableprocess
-import subprocess
-from xml.etree import ElementTree
-from distutils import dir_util
-from time import sleep
 
-try:
-    import simplejson
-except ImportError:
-    import json as simplejson
-
-import logging
-logger = logging.getLogger(__name__)
-
-# Use dir_util for copy/rm operations because shutil is all kinds of broken
-copytree = dir_util.copy_tree
-rmtree = dir_util.remove_tree
-
-def findInPath(fileName, path=os.environ['PATH']):
-    dirs = path.split(os.pathsep)
-    for dir in dirs:
-        if os.path.isfile(os.path.join(dir, fileName)):
-            return os.path.join(dir, fileName)
-        if os.name == 'nt' or sys.platform == 'cygwin':
-            if os.path.isfile(os.path.join(dir, fileName + ".exe")):
-                return os.path.join(dir, fileName + ".exe")
-    return None
-
-stdout = sys.stdout
-stderr = sys.stderr
-stdin = sys.stdin
-
-def run_command(cmd, env=None, **kwargs):
-    """Run the given command in killable process."""
-    killable_kwargs = {'stdout':stdout ,'stderr':stderr, 'stdin':stdin}
-    killable_kwargs.update(kwargs)
-
-    if sys.platform != "win32":
-        return killableprocess.Popen(cmd, preexec_fn=lambda : os.setpgid(0, 0),
-                                     env=env, **killable_kwargs)
-    else:
-        return killableprocess.Popen(cmd, env=env, **killable_kwargs)
-
-def getoutput(l):
-    tmp = tempfile.mktemp()
-    x = open(tmp, 'w')
-    subprocess.call(l, stdout=x, stderr=x)
-    x.close(); x = open(tmp, 'r')
-    r = x.read() ; x.close()
-    os.remove(tmp)
-    return r
-
-def get_pids(name, minimun_pid=0):
-    """Get all the pids matching name, exclude any pids below minimum_pid."""
-    if os.name == 'nt' or sys.platform == 'cygwin':
-        import wpk
-
-        pids = wpk.get_pids(name)
-
-    else:
-        # get_pids_cmd = ['ps', 'ax']
-        # h = killableprocess.runCommand(get_pids_cmd, stdout=subprocess.PIPE, universal_newlines=True)
-        # h.wait(group=False)
-        # data = h.stdout.readlines()
-        data = getoutput(['ps', 'ax']).splitlines()
-        pids = [int(line.split()[0]) for line in data if line.find(name) is not -1]
-
-    matching_pids = [m for m in pids if m > minimun_pid]
-    return matching_pids
-
-def kill_process_by_name(name):
-    """Find and kill all processes containing a certain name"""
-
-    pids = get_pids(name)
-
-    if os.name == 'nt' or sys.platform == 'cygwin':
-        for p in pids:
-            import wpk
-
-            wpk.kill_pid(p)
-
-    else:
-        for pid in pids:
-            try:
-                os.kill(pid, signal.SIGTERM)
-            except OSError: pass
-            sleep(.5)
-            if len(get_pids(name)) is not 0:
-                try:
-                    os.kill(pid, signal.SIGKILL)
-                except OSError: pass
-                sleep(.5)
-                if len(get_pids(name)) is not 0:
-                    logger.error('Could not kill process')
-
-def makedirs(name):
-
-    head, tail = os.path.split(name)
-    if not tail:
-        head, tail = os.path.split(head)
-    if head and tail and not os.path.exists(head):
-        try:
-            makedirs(head)
-        except OSError, e:
-            pass
-        if tail == os.curdir:           # xxx/newdir/. exists if xxx/newdir exists
-            return
-    try:
-        os.mkdir(name)
-    except:
-        pass
-
-class Profile(object):
-    """Handles all operations regarding profile. Created new profiles, installs extensions,
-    sets preferences and handles cleanup."""
-
-    def __init__(self, binary=None, profile=None, addons=None,
-                 preferences=None):
-
-        self.binary = binary
-
-        self.create_new = not(bool(profile))
-        if profile:
-            self.profile = profile
-        else:
-            self.profile = self.create_new_profile(self.binary)
-
-        self.addons_installed = []
-        self.addons = addons
-
-        ### set preferences from class preferences
-        prefereneces = preferences or {}
-        if hasattr(self.__class__, 'preferences'):
-            self.preferences = self.__class__.preferences.copy()
-        else:
-            self.preferences = {}
-        self.preferences.update(preferences)
-
-        for addon in addons:
-            self.install_addon(addon)
-
-        self.set_preferences(self.preferences)
-
-    def create_new_profile(self, binary):
-        """Create a new clean profile in tmp which is a simple empty folder"""
-        profile = tempfile.mkdtemp(suffix='.mozrunner')
-        return profile
-
-    def install_addon(self, addon):
-        """Installs the given addon in the profile."""
-        tmpdir = None
-        if addon.endswith('.xpi'):
-            tmpdir = tempfile.mkdtemp(suffix = "." + os.path.split(addon)[-1])
-            compressed_file = zipfile.ZipFile(addon, "r")
-            for name in compressed_file.namelist():
-                if name.endswith('/'):
-                    makedirs(os.path.join(tmpdir, name))
-                else:
-                    if not os.path.isdir(os.path.dirname(os.path.join(tmpdir, name))):
-                        makedirs(os.path.dirname(os.path.join(tmpdir, name)))
-                    data = compressed_file.read(name)
-                    f = open(os.path.join(tmpdir, name), 'wb')
-                    f.write(data) ; f.close()
-            addon = tmpdir
-
-        tree = ElementTree.ElementTree(file=os.path.join(addon, 'install.rdf'))
-        # description_element =
-        # tree.find('.//{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description/')
-
-        desc = tree.find('.//{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description')
-        apps = desc.findall('.//{http://www.mozilla.org/2004/em-rdf#}targetApplication')
-        for app in apps:
-          desc.remove(app)
-        if desc and desc.attrib.has_key('{http://www.mozilla.org/2004/em-rdf#}id'):
-            addon_id = desc.attrib['{http://www.mozilla.org/2004/em-rdf#}id']
-        elif desc and desc.find('.//{http://www.mozilla.org/2004/em-rdf#}id') is not None:
-            addon_id = desc.find('.//{http://www.mozilla.org/2004/em-rdf#}id').text
-        else:
-            about = [e for e in tree.findall(
-                        './/{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description') if
-                         e.get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about') ==
-                         'urn:mozilla:install-manifest'
-                    ]
-
-            x = e.find('.//{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description')
-
-            if len(about) is 0:
-                addon_element = tree.find('.//{http://www.mozilla.org/2004/em-rdf#}id')
-                addon_id = addon_element.text
-            else:
-                addon_id = about[0].get('{http://www.mozilla.org/2004/em-rdf#}id')
-
-        addon_path = os.path.join(self.profile, 'extensions', addon_id)
-        copytree(addon, addon_path, preserve_symlinks=1)
-        self.addons_installed.append(addon_path)
-
-    def set_preferences(self, preferences):
-        """Adds preferences dict to profile preferences"""
-        prefs_file = os.path.join(self.profile, 'user.js')
-        # Ensure that the file exists first otherwise create an empty file
-        if os.path.isfile(prefs_file):
-            f = open(prefs_file, 'a+')
-        else:
-            f = open(prefs_file, 'w')
-
-        f.write('\n#MozRunner Prefs Start\n')
-
-        pref_lines = ['user_pref(%s, %s);' %
-                      (simplejson.dumps(k), simplejson.dumps(v) ) for k, v in
-                       preferences.items()]
-        for line in pref_lines:
-            f.write(line+'\n')
-        f.write('#MozRunner Prefs End\n')
-        f.flush() ; f.close()
-
-    def clean_preferences(self):
-        """Removed preferences added by mozrunner."""
-        lines = open(os.path.join(self.profile, 'user.js'), 'r').read().splitlines()
-        s = lines.index('#MozRunner Prefs Start') ; e = lines.index('#MozRunner Prefs End')
-        cleaned_prefs = '\n'.join(lines[:s] + lines[e+1:])
-        f = open(os.path.join(self.profile, 'user.js'), 'w')
-        f.write(cleaned_prefs) ; f.flush() ; f.close()
-
-    def clean_addons(self):
-        """Cleans up addons in the profile."""
-        for addon in self.addons_installed:
-            if os.path.isdir(addon):
-                rmtree(addon)
-
-    def cleanup(self):
-        """Cleanup operations on the profile."""
-        if self.create_new:
-            rmtree(self.profile)
-        else:
-            self.clean_preferences()
-            self.clean_addons()
-
-class FirefoxProfile(Profile):
-    """Specialized Profile subclass for Firefox"""
-    preferences = {# Don't automatically update the application
-                   'app.update.enabled' : False,
-                   # Don't restore the last open set of tabs if the browser has crashed
-                   'browser.sessionstore.resume_from_crash': False,
-                   # Don't check for the default web browser
-                   'browser.shell.checkDefaultBrowser' : False,
-                   # Don't warn on exit when multiple tabs are open
-                   'browser.tabs.warnOnClose' : False,
-                   # Don't warn when exiting the browser
-                   'browser.warnOnQuit': False,
-                   # Don't install global add-ons
-                   'extensions.enabledScopes' : 0,
-                   # Don't automatically update add-ons
-                   'extensions.update.enabled'    : False,
-                   # Don't open a dialog to show available add-on updates
-                   'extensions.update.notifyUser' : False,
-                   }
-
-    @property
-    def names(self):
-        if sys.platform == 'darwin':
-            return ['firefox', 'minefield', 'shiretoko']
-        if (sys.platform == 'linux2') or (sys.platform in ('sunos5', 'solaris')):
-            return ['firefox', 'mozilla-firefox', 'iceweasel']
-        if os.name == 'nt' or sys.platform == 'cygwin':
-            return ['firefox']
-
-class ThunderbirdProfile(Profile):
-    preferences = {'extensions.update.enabled'    : False,
-                   'extensions.update.notifyUser' : False,
-                   'browser.shell.checkDefaultBrowser' : False,
-                   'browser.tabs.warnOnClose' : False,
-                   'browser.warnOnQuit': False,
-                   'browser.sessionstore.resume_from_crash': False,
-                   }
-    names = ["thunderbird", "shredder"]
+from utils import findInPath
+from mozprocess import killableprocess
+from mozprocess.kill import kill_process_by_name
 
 
 class Runner(object):
@@ -342,7 +69,7 @@ class Runner(object):
 
         self.cmdargs = cmdargs
         if env is None:
-            self.env = copy.copy(os.environ)
+            self.env = os.environ.copy()
             self.env.update({'MOZ_NO_REMOTE':"1",})
         else:
             self.env = env
@@ -437,7 +164,7 @@ class Runner(object):
         """Run self.command in the proper environment."""
         if self.profile is None:
             self.profile = self.profile_class()
-        self.process_handler = run_command(self.command+self.cmdargs, self.env, **self.kp_kwargs)
+        self.process_handler = killableprocess.runCommand(self.command+self.cmdargs, env=self.env, **self.kp_kwargs)
 
     def wait(self, timeout=None):
         """Wait for the browser to exit."""
@@ -449,7 +176,7 @@ class Runner(object):
                     self.process_handler.pid = pid
                     self.process_handler.wait(timeout=timeout)
 
-    def kill(self, kill_signal=signal.SIGTERM):
+    def stop(self, kill_signal=signal.SIGTERM):
         """Kill the browser"""
         if sys.platform != 'win32':
             self.process_handler.kill()
@@ -461,13 +188,11 @@ class Runner(object):
             try:
                 self.process_handler.kill(group=True)
             except Exception, e:
-                logger.error('Cannot kill process, '+type(e).__name__+' '+e.message)
+                raise Exception('Cannot kill process, '+type(e).__name__+' '+e.message)
 
         for name in self.aggressively_kill:
             kill_process_by_name(name)
 
-    def stop(self):
-        self.kill()
 
 class FirefoxRunner(Runner):
     """Specialized Runner subclass for running Firefox."""
