@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import os
+import platform
 import sys
 import copy
 import tempfile
@@ -420,7 +421,10 @@ class Runner(object):
     @property
     def command(self):
         """Returns the command list to run."""
-        return [self.binary, '-profile', self.profile.profile]
+        command = [self.binary, '-profile', self.profile.profile]
+        if hasattr(platform, 'mac_ver') and platform.mac_ver()[0][:4] == '10.5':
+            command = ['arch', '-arch', 'i386'] + command
+        return command
 
     def get_repositoryInfo(self):
         """Read repository information from application.ini and platform.ini."""
