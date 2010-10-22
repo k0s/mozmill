@@ -472,7 +472,15 @@ class MozMillRestart(MozMill):
         # and since cut + paste is evil I'll actually have to figure
         # out what we should be doing here
                     
-
+def create_mozmill(app, restart=False, binary=None,
+                   profile_args=None, runner_args=None, **mozmill_args):
+    # XXX what to do if app = 'thunderbird' and restart = 'true' ?
+    if profile_args is None:
+        profile_args = {}
+    if runner_args is None:
+        runner_args = {}
+    mozmill.start(runner=runner)
+    return mozmill
 
 class CLI(jsbridge.CLI):
     module = "mozmill"
