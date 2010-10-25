@@ -568,13 +568,6 @@ class CLI(jsbridge.CLI):
         for cls in handlers.handlers():
             cls.add_options(parser)
 
-    def get_profile(self, *args, **kwargs):
-        # XXX to refactor; the slots should be smart enough to
-        # make this unnecessary
-        profile = jsbridge.CLI.get_profile(self, *args, **kwargs)
-        profile.install_addon(extension_path)
-        return profile
-
     def profile_args(self):
         """
         return arguments needed to make a profile object from
