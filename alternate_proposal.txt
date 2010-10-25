@@ -1,0 +1,33 @@
+Currently, we keep distinct classes in each of several packages to
+deal with the difference between Firefox and Thunderbird.  This is bad
+for a few reasons:
+
+ - if one were to add another application, one would need to add it in
+   several (undocumented) places
+ - (similarly, if one wished to look at all the specializations, one
+   would have to look in several places)
+ - there is no way of meaningfully extending this information;  that
+   is to say, if a given controller[*] wished to deal with the various
+   different applications, it has to deal with each of them
+   individually.  which is to say, one multiplies the amount of places
+   where the various application-specific information lives!
+
+Currently, the various bits of application-specific code live at:
+
+* MozProfile:
+  - {Firefox,Thunderbird}Profile: preferences
+
+* MozRunner:
+  - {Firefox,Thunderbird}Runner: app_name, profile_class,names 
+
+--
+
+[*] currently, there is essentially one (MozMill-level) controller:
+the CLI class;  however, the conflation of command-line handling and
+controlling is purely a historic accident.  Also, if (if!) it is
+desirable to have a controller for the MozMill API, then this should
+not be a close coupling as this defeats the purpose of having a driver
+(e.g. whether an API should require a driver may be a subject of
+debate; if the API requires a specific driver, this is in bad form as
+the controller effectively becomes (part of) the API and the notion of
+loose coupling is destroyed).
