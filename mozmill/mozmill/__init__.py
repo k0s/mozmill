@@ -189,7 +189,13 @@ class MozMill(object):
             self.back_channel.add_global_listener(global_listener)
 
     def start(self, runner):
+
+        # XXX is there any reason we pass runner here instead of
+        # as a constructor argument?
+        # likewise, is there any reason for the separation
+        # of .start() and .run() ???
         self.runner = runner
+        
         self.add_listener(self.firePythonCallback_listener, eventType='mozmill.firePythonCallback')
         self.endRunnerCalled = False
         
@@ -223,6 +229,7 @@ class MozMill(object):
 
         # Give a second for any callbacks to finish.
         sleep(1)
+
     def run(self, test):
         """run the tests"""
         disconnected = False
@@ -472,15 +479,45 @@ class MozMillRestart(MozMill):
         # and since cut + paste is evil I'll actually have to figure
         # out what we should be doing here
                     
-def create_mozmill(app, restart=False, binary=None,
+def create_mozmill(app, restart=False, binary=None, 
                    profile_args=None, runner_args=None, **mozmill_args):
-    # XXX what to do if app = 'thunderbird' and restart = 'true' ?
+
+    # set argument defaults
     if profile_args is None:
         profile_args = {}
     if runner_args is None:
         runner_args = {}
+
+    # modify these arguments to pass mandatory things for mozmill/jsbridge:
+    # - addons for the profile
+    profile_args.setdefault('addons', [])
+    for path in extension_path, jsbridge.extension_path:
+        if path not in profile_args['addons']:
+            profile_args['addons'].append(path)
+    # - cmdargs for the runner
+    mozmill_args.setdefault('jsbridge_port', 24242)
+    # XXX should get the above value from MozMill __init__
+    runner_args.setdefault('cmdargs', [])
+    if 'jsbridge' not in runner_args['cmdargs']:
+        runner_args['cmdargs'].extend(('-jsbridge',
+                                       str(mozmill_args['jsbridge_port'])))
+    # -cmadargs for mozmill
+
+    # create the runner
+    from mozrunner.runner import create_app_runner
+    runner = create_app_runner(app, binary, profile_args, runner_args)
+
+    # choose a mozmill class
+    if restart:
+        mozmill_class = MozMillRestart
+    else:
+        mozmill_class = MozMill
+
+    # create a mozmill + start it
+    mozmill = mozmill_class(**mozmill_args)
     mozmill.start(runner=runner)
     return mozmill
+
 
 class CLI(jsbridge.CLI):
     module = "mozmill"
@@ -509,6 +546,7 @@ class CLI(jsbridge.CLI):
                                           )
 
         # expand user directory and check existence for the test
+        # XXX this shouldn't really use the absolute path
         if self.options.test:
             self.options.test = os.path.abspath(os.path.expanduser(self.options.test))
             if ( ( not os.path.isdir(self.options.test) )

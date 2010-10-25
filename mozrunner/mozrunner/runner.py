@@ -234,8 +234,8 @@ def create_runner(profile_class, runner_class,
                           **runner_args)
     return runner    
 
-classes = { 'firefox': (FirefoxRunner, FirefoxProfile),
-            'thunderbird': (ThunderbirdRunner, ThunderbirdProfile), }
+classes = { 'firefox': (FirefoxProfile, FirefoxRunner),
+            'thunderbird': (ThunderbirdProfile, ThunderbirdRunner), }
 
 def create_app_runner(app, binary=None, profile_args=None, runner_args=None):
     profile_class, runner_class = classes[app]
