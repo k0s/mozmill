@@ -263,6 +263,8 @@ class CLI(object):
             sys.exit(0)
 
         # choose appropriate runner and profile classes
+        # XXX note that self.options.app and self.options.binary
+        # are in some ways redundant
         if self.options.app == 'firefox':
             self.runner_class = FirefoxRunner
             self.profile_class = FirefoxProfile

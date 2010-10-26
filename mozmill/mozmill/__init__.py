@@ -68,8 +68,7 @@ class MozMill(object):
     MozMill is a one-shot test runner  You should use MozMill as follows:
 
     m = MozMill(...)
-    m.start(...)
-    m.run_tests()
+    m.run(test)
     m.stop()
 
     You should *NOT* vary from this order of execution.  If you have need to
@@ -107,19 +106,21 @@ class MozMill(object):
         # create the runner
         from mozrunner.runner import create_app_runner
         runner = create_app_runner(app, binary, profile_args, runner_args)
+        mozmill_args['runner'] = runner
 
         # create a mozmill + start it
         mozmill = cls(**mozmill_args)
-        mozmill.start(runner=runner)
         return mozmill
 
 
-    def __init__(self, jsbridge_port=24242, jsbridge_timeout=60, handlers=()):
+    def __init__(self, runner, jsbridge_port=24242, jsbridge_timeout=60, handlers=()):
         """
         - jsbridge_port : port jsbridge uses to connect to to the application
         - jsbridge_timeout : how long to go without jsbridge communication
         - handlers : pluggable event handler
         """
+
+        self.runner = runner
 
         # jsbridge parameters
         self.jsbridge_port = jsbridge_port
@@ -225,21 +226,18 @@ class MozMill(object):
             self.back_channel.add_listener(listener[0], **listener[1])
         for global_listener in self.global_listeners:
             self.back_channel.add_global_listener(global_listener)
+            
 
-    def start(self, runner):
-
-        # XXX is there any reason we pass runner here instead of
-        # as a constructor argument?
-        # likewise, is there any reason for the separation
-        # of .start() and .run() ???
-        self.runner = runner
+    def start(self, create_network=True):
         
         self.add_listener(self.firePythonCallback_listener, eventType='mozmill.firePythonCallback')
         self.endRunnerCalled = False
         
         self.runner.start()
-        self.create_network()
-        self.appinfo = self.get_appinfo(self.bridge)
+
+        if create_network:
+            self.create_network()
+            self.appinfo = self.get_appinfo(self.bridge)
 
         self.starttime = datetime.utcnow()
 
@@ -270,6 +268,11 @@ class MozMill(object):
 
     def run(self, test):
         """run the tests"""
+
+        # start the runner and jsbridge
+        self.start()
+
+        # run the tests
         disconnected = False
         try:
             self.run_tests(test)
@@ -382,13 +385,8 @@ class MozMillRestart(MozMill):
         MozMill.__init__(self, *args, **kwargs)
         self.python_callbacks = [] # TODO: why do we reset this?
     
-    def start(self, runner):
-        # XXX note that this block is duplicated *EXACTLY* from MozMill.start
-        self.runner = runner
-        self.endRunnerCalled = False
-        self.add_listener(self.firePythonCallback_listener, eventType='mozmill.firePythonCallback')
-
-        self.starttime = datetime.utcnow()
+    def start(self):
+        MozMill.start(self, create_network=False)
      
     def firePythonCallback_listener(self, obj):
         if obj['fire_now']:
@@ -532,17 +530,11 @@ class CLI(jsbridge.CLI):
             self.mozmill_class = MozMill
 
         # instantiate plugins
-        event_handlers = []
+        self.event_handlers = []
         for cls in handlers.handlers():
             handler = handlers.instantiate_handler(cls, self.options)
             if handler is not None:
-                event_handlers.append(handler)
-
-        # create a mozmill
-        self.mozmill = self.mozmill_class(jsbridge_port=int(self.options.port),                                  
-                                          jsbridge_timeout=self.options.timeout,
-                                          handlers=event_handlers
-                                          )
+                self.event_handlers.append(handler)
 
         # expand user directory and check existence for the test
         # XXX this shouldn't really use the absolute path
@@ -553,6 +545,8 @@ class CLI(jsbridge.CLI):
                 raise Exception("Not a valid test file/directory")
 
     def add_options(self, parser):
+        """add command line options"""
+        
         jsbridge.CLI.add_options(self, parser)
 
         parser.add_option("-t", "--test", dest="test", default=None, 
@@ -564,6 +558,7 @@ class CLI(jsbridge.CLI):
                           default=False,
                           help="operate in restart mode")
 
+        # add event handler CLI options
         for cls in handlers.handlers():
             cls.add_options(parser)
 
@@ -583,19 +578,28 @@ class CLI(jsbridge.CLI):
         return runner_args
         
     def run(self):
-        # create a Mozrunner
-        runner = self.create_runner()
 
-        # start your mozmill
-        self.mozmill.start(runner=runner)
+        # create a mozmill
+        self.mozmill = self.mozmill_class.create(self.options.app,
+                                                 self.options.binary,
+                                                 self.profile_args(),
+                                                 self.runner_args(),
+                                                 jsbridge_port=int(self.options.port),                                  
+                                                 jsbridge_timeout=self.options.timeout,
+                                                 handlers=self.event_handlers
+                                                 )
+
+
 
         if self.options.test:
             self.mozmill.run(self.options.test)
         else:
             # TODO: document use case
             # probably take out of this function entirely
+                    # start your mozmill
+            self.mozmill.start()
             if self.options.shell:
-                self.start_shell(runner)
+                self.start_shell(self.mozmill.runner)
             else:
                 try:
                     if not hasattr(runner, 'process_handler'):
