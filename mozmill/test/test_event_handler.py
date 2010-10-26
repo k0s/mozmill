@@ -5,7 +5,7 @@ example of invocation of python event handlers using the API
 """
 
 import os
-from mozmill import create_mozmill
+from mozmill import MozMill
 
 dirname = os.path.abspath(os.path.dirname(__file__))
 test = os.path.join(dirname, 'test_event_handler.py')
@@ -32,7 +32,7 @@ def test_event_handler():
   assert os.path.exists(test)
   
   handler = MyEventHandler()
-  mozmill = create_mozmill('firefox', handlers=(handler,))
+  mozmill = MozMill.create('firefox', handlers=(handler,))
   mozmill.run(test)
   expected = [u'register', u'mozmill.startRunner', u'mozmill.setModule', u'mozmill.persist', u'mozmill.endRunner']
   assert handler._events == expected

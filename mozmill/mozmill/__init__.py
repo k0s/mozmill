@@ -76,6 +76,44 @@ class MozMill(object):
     run different sets of tests, create a new instantiation of MozMill
     """
 
+    @classmethod
+    def create(cls, app, binary=None, 
+               profile_args=None, runner_args=None, **mozmill_args):
+        """mozmill factory"""
+
+        # set argument defaults
+        if profile_args is None:
+            profile_args = {}
+        if runner_args is None:
+            runner_args = {}
+
+        # modify these arguments to pass mandatory things for mozmill/jsbridge:
+        # - addons for the profile
+        profile_args.setdefault('addons', [])
+        for path in extension_path, jsbridge.extension_path:
+            if path not in profile_args['addons']:
+                profile_args['addons'].append(path)
+        # - cmdargs for the runner from jsbridge
+        mozmill_args.setdefault('jsbridge_port', 24242)
+        # XXX should get the above value from MozMill __init__
+        runner_args.setdefault('cmdargs', [])
+        if '-jsbridge' not in runner_args['cmdargs']:
+            runner_args['cmdargs'].extend(('-jsbridge',
+                                           str(mozmill_args['jsbridge_port'])))
+        # -cmdargs for the runner from mozmill
+        if '-foreground' not in runner_args['cmdargs']:
+            runner_args['cmdargs'].append('-foreground')
+
+        # create the runner
+        from mozrunner.runner import create_app_runner
+        runner = create_app_runner(app, binary, profile_args, runner_args)
+
+        # create a mozmill + start it
+        mozmill = cls(**mozmill_args)
+        mozmill.start(runner=runner)
+        return mozmill
+
+
     def __init__(self, jsbridge_port=24242, jsbridge_timeout=60, handlers=()):
         """
         - jsbridge_port : port jsbridge uses to connect to to the application
@@ -479,45 +517,6 @@ class MozMillRestart(MozMill):
         # and since cut + paste is evil I'll actually have to figure
         # out what we should be doing here
                     
-def create_mozmill(app, restart=False, binary=None, 
-                   profile_args=None, runner_args=None, **mozmill_args):
-
-    # set argument defaults
-    if profile_args is None:
-        profile_args = {}
-    if runner_args is None:
-        runner_args = {}
-
-    # modify these arguments to pass mandatory things for mozmill/jsbridge:
-    # - addons for the profile
-    profile_args.setdefault('addons', [])
-    for path in extension_path, jsbridge.extension_path:
-        if path not in profile_args['addons']:
-            profile_args['addons'].append(path)
-    # - cmdargs for the runner
-    mozmill_args.setdefault('jsbridge_port', 24242)
-    # XXX should get the above value from MozMill __init__
-    runner_args.setdefault('cmdargs', [])
-    if 'jsbridge' not in runner_args['cmdargs']:
-        runner_args['cmdargs'].extend(('-jsbridge',
-                                       str(mozmill_args['jsbridge_port'])))
-    # -cmadargs for mozmill
-
-    # create the runner
-    from mozrunner.runner import create_app_runner
-    runner = create_app_runner(app, binary, profile_args, runner_args)
-
-    # choose a mozmill class
-    if restart:
-        mozmill_class = MozMillRestart
-    else:
-        mozmill_class = MozMill
-
-    # create a mozmill + start it
-    mozmill = mozmill_class(**mozmill_args)
-    mozmill.start(runner=runner)
-    return mozmill
-
 
 class CLI(jsbridge.CLI):
     module = "mozmill"
@@ -607,6 +606,8 @@ class CLI(jsbridge.CLI):
 
             if self.mozmill.runner is not None:
                 self.mozmill.runner.profile.cleanup()
+
+    
     
 def enum(*sequential, **named):
     # XXX to deprecate
