@@ -108,7 +108,7 @@ class MozMill(object):
         runner = create_app_runner(app, binary, profile_args, runner_args)
         mozmill_args['runner'] = runner
 
-        # create a mozmill + start it
+        # create a mozmill + return it
         mozmill = cls(**mozmill_args)
         return mozmill
 
@@ -168,6 +168,7 @@ class MozMill(object):
 
     def persist_listener(self, obj):
         self.persisted = obj
+
     def startTest_listener(self, test):
         self.current_test = test
 
@@ -385,7 +386,7 @@ class MozMillRestart(MozMill):
         MozMill.__init__(self, *args, **kwargs)
         self.python_callbacks = [] # TODO: why do we reset this?
     
-    def start(self):
+    def start(self, create_network=False):
         MozMill.start(self, create_network=False)
      
     def firePythonCallback_listener(self, obj):
