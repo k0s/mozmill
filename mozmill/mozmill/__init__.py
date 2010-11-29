@@ -160,8 +160,7 @@ class MozMill(object):
         self.shutdownModes = enum('default', 'user_shutdown', 'user_restart')
         self.currentShutdownMode = self.shutdownModes.default
         self.userShutdownEnabled = False
-        self.test = None
-        #self.zombieDetector = ZombieDetector(self.stop)
+        self.tests = []
 
         # test time
         self.starttime = self.endtime = None
@@ -247,17 +246,17 @@ class MozMill(object):
         # XXX assumes run_tests will be called soon after (currently true)
         self.starttime = datetime.utcnow()
 
-    def run_tests(self, test, sleeptime=4):
+    def run_tests(self, tests, sleeptime=4):
         """
-        run a test file or directory
-        - test : test file or directory to run
+        run test files or directories
+        - test : test files or directories to run
         - sleeptime : initial time to sleep [s] (not sure why the default is 4)
         """
 
         # Reset our Zombie Because we are still active
         #self.zombieDetector.resetTimer()
 
-        self.test = test
+        self.tests.extend(tests)
 
         frame = jsbridge.JSObject(self.bridge,
                                   "Components.utils.import('resource://mozmill/modules/frame.js')")
@@ -266,11 +265,12 @@ class MozMill(object):
         # transfer persisted data
         frame.persisted = self.persisted
 
-        # run the test directory or file
-        if os.path.isdir(test):
-            frame.runTestDirectory(test)
-        else:
-            frame.runTestFile(test)
+        for test in tests:
+            # run the test directory or file
+            if os.path.isdir(test):
+                frame.runTestDirectory(test)
+            else:
+                frame.runTestFile(test)
 
         # Give a second for any callbacks to finish.
         sleep(1)
@@ -397,7 +397,7 @@ class MozMill(object):
         """get the report results"""
         format = "%Y-%m-%dT%H:%M:%SZ"
 
-        assert self.test, 'run_tests not called'
+        assert self.tests, 'no tests have been run!'
         assert self.starttime, 'starttime not set; have you started the tests?'
         if not self.endtime:
             self.endtime = datetime.utcnow()
@@ -406,7 +406,6 @@ class MozMill(object):
                   'time_start': self.starttime.strftime(format),
                   'time_end': self.endtime.strftime(format),
                   'time_upload': 'n/a',
-                  'root_path': self.test,
                   'tests_passed': len(self.passes),
                   'tests_failed': len(self.fails),
                   'tests_skipped': len(self.skipped),
@@ -643,25 +642,24 @@ class MozMillRestart(MozMill):
             profile.install_addon(extension_path)
         profile.set_preferences(profile.preferences)
     
-    def run_tests(self, test_dir, sleeptime=4):
+    def run_tests(self, tests, sleeptime=4):
 
-        self.test = test_dir
-        
-        # Zombie Counter Reset
-        #self.zombieDetector.resetTimer()
+        self.tests.extend(tests)
 
-        # XXX this allows for only one sub-level of test directories
-        # is this a spec or a side-effect?
-        # If the former, it should be documented
-        test_dirs = [d for d in os.listdir(os.path.abspath(os.path.expanduser(test_dir))) 
-                     if d.startswith('test') and os.path.isdir(os.path.join(test_dir, d))]
-        self.add_listener(self.firePythonCallback_listener, eventType='mozmill.firePythonCallback')
-        if not len(test_dirs):
-            test_dirs = [test_dir]
+        for test_dir in tests:
+            
+            # XXX this allows for only one sub-level of test directories
+            # is this a spec or a side-effect?
+            # If the former, it should be documented
+            test_dirs = [d for d in os.listdir(os.path.abspath(os.path.expanduser(test_dir))) 
+                         if d.startswith('test') and os.path.isdir(os.path.join(test_dir, d))]
+            self.add_listener(self.firePythonCallback_listener, eventType='mozmill.firePythonCallback')
+            if not len(test_dirs):
+                test_dirs = [test_dir]
 
-        for d in test_dirs:
-            d = os.path.abspath(os.path.join(test_dir, d))
-            self.run_dir(d, sleeptime)
+            for d in test_dirs:
+                d = os.path.abspath(os.path.join(test_dir, d))
+                self.run_dir(d, sleeptime)
 
         # cleanup the profile
         self.runner.profile.cleanup()
@@ -719,7 +717,7 @@ class CLI(jsbridge.CLI):
         # expand user directory and check existence for the tests
         self.tests = []
         for test in self.options.test:
-            test = os.path.abspath(os.path.expanduser(test)
+            test = os.path.abspath(os.path.expanduser(test))
             if not os.path.exists(test):
                 raise IOError("Not a valid test file/directory: '%s'" % test)
             self.tests.append(test)
@@ -760,15 +758,13 @@ class CLI(jsbridge.CLI):
 
             # run the tests
             disconnected = False
-            for test in self.tests:
-                try:
-                    self.mozmill.run_tests(test)
-                except JSBridgeDisconnectError:
-                    disconnected = True
-                    if not self.mozmill.userShutdownEnabled:
-                        self.mozmill.report_disconnect()               
-                        print 'TEST-UNEXPECTED-FAIL | Disconnect Error: Application unexpectedly closed'
-                        break
+            try:
+                self.mozmill.run_tests(tests)
+            except JSBridgeDisconnectError:
+                disconnected = True
+                if not self.mozmill.userShutdownEnabled:
+                    self.mozmill.report_disconnect()               
+                    print 'TEST-UNEXPECTED-FAIL | Disconnect Error: Application unexpectedly closed'
 
             # shutdown the test harness
             self.mozmill.stop(fatal=disconnected)
