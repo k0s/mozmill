@@ -581,9 +581,6 @@ class MozMillRestart(MozMill):
     def run_dir(self, test_dir, sleeptime=4):
         """run a directory of restart tests resetting the profile per directory"""
 
-        # Reset our Zombie counter on each directory
-        #self.zombieDetection.resetTimer()
-
         # TODO:  document this behaviour!
         if os.path.isfile(os.path.join(test_dir, 'testPre.js')):   
             pre_test = os.path.join(test_dir, 'testPre.js')
@@ -696,8 +693,8 @@ class CLI(jsbridge.CLI):
     module = "mozmill"
 
     parser_options = copy.copy(jsbridge.CLI.parser_options)
-    parser_options[("-t", "--test",)] = dict(dest="test", default=False, 
-                                             help="Run test file or directory.")
+    parser_options[("-t", "--test",)] = dict(dest="test", action='append',
+                                             help="Run test")
     parser_options[("-l", "--logfile",)] = dict(dest="logfile", default=None,
                                                 help="Log all events to file.")
     parser_options[("--show-errors",)] = dict(dest="showerrors", default=False, 
@@ -719,12 +716,14 @@ class CLI(jsbridge.CLI):
                                           jsbridge_timeout=self.options.timeout,
                                           )
 
-        # expand user directory and check existence for the test
-        if self.options.test:
-            self.options.test = os.path.abspath(os.path.expanduser(self.options.test))
-            if ( ( not os.path.isdir(self.options.test) )
-                 and ( not os.path.isfile(self.options.test) ) ):
-                raise Exception("Not a valid test file/directory")
+        # expand user directory and check existence for the tests
+        self.tests = []
+        for test in self.options.test:
+            test = os.path.abspath(os.path.expanduser(test)
+            if not os.path.exists(test):
+                raise IOError("Not a valid test file/directory: '%s'" % test)
+            self.tests.append(test)
+
 
         # setup log formatting
         self.mozmill.add_global_listener(LoggerListener())
@@ -757,17 +756,19 @@ class CLI(jsbridge.CLI):
             
         self.mozmill.start(runner=runner, profile=runner.profile)
 
-        if self.options.test:
+        if self.tests:
 
             # run the tests
             disconnected = False
-            try:
-                self.mozmill.run_tests(self.options.test)
-            except JSBridgeDisconnectError:
-                disconnected = True
-                if not self.mozmill.userShutdownEnabled:
-                    self.mozmill.report_disconnect()               
-                    print 'TEST-UNEXPECTED-FAIL | Disconnect Error: Application unexpectedly closed'
+            for test in self.tests:
+                try:
+                    self.mozmill.run_tests(test)
+                except JSBridgeDisconnectError:
+                    disconnected = True
+                    if not self.mozmill.userShutdownEnabled:
+                        self.mozmill.report_disconnect()               
+                        print 'TEST-UNEXPECTED-FAIL | Disconnect Error: Application unexpectedly closed'
+                        break
 
             # shutdown the test harness
             self.mozmill.stop(fatal=disconnected)
@@ -791,12 +792,6 @@ class CLI(jsbridge.CLI):
             if self.mozmill.runner is not None:
                 self.mozmill.runner.profile.cleanup()
     
-class RestartCLI(CLI):
-    mozmill_class = MozMillRestart
-    parser_options = copy.copy(CLI.parser_options)
-    parser_options[("-t", "--test",)] = dict(dest="test", default=False, 
-                                             help="Run test directory.")
-
 
 class ThunderbirdCLI(CLI):
     profile_class = mozrunner.ThunderbirdProfile
