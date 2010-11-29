@@ -759,7 +759,7 @@ class CLI(jsbridge.CLI):
             # run the tests
             disconnected = False
             try:
-                self.mozmill.run_tests(tests)
+                self.mozmill.run_tests(self.tests)
             except JSBridgeDisconnectError:
                 disconnected = True
                 if not self.mozmill.userShutdownEnabled:
