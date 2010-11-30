@@ -787,7 +787,11 @@ class CLI(jsbridge.CLI):
 
             if self.mozmill.runner is not None:
                 self.mozmill.runner.profile.cleanup()
-    
+
+
+class RestartCLI(CLI):
+    mozmill_class = MozMillRestart
+
 
 class ThunderbirdCLI(CLI):
     profile_class = mozrunner.ThunderbirdProfile
