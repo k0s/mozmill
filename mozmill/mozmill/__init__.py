@@ -41,7 +41,6 @@ import imp
 import os
 import socket
 import sys
-import threading
 import traceback
 
 import jsbridge
@@ -73,9 +72,14 @@ class TestResults(object):
         self.fails = []
         self.skipped = []
         self.alltests = []
-        self.starttime = None
-        self.endtime = None
-        
+        self.starttime = 
+
+    def events(self):
+        pass
+
+    def stop(self, handlers):
+        """do final reporting and such"""
+        self.endtime = datetime.utcnow()
 
 class MozMill(object):
     """
@@ -211,9 +215,9 @@ class MozMill(object):
         
         self.runner.start()
         self.create_network()
+
         self.appinfo = self.get_appinfo(self.bridge)
 
-        self.starttime = datetime.utcnow()
 
     def run_tests(self, tests, sleeptime=4):
         """
@@ -269,6 +273,7 @@ class MozMill(object):
                    'platform_buildid': str(appInfo.platformBuildID),
                    'platform_version': str(appInfo.platformVersion),
                   }
+        results.update(self.runner.get_repositoryInfo())
 
         return results
 
@@ -284,6 +289,7 @@ class MozMill(object):
         }]
         test['passed'] = 0
         test['failed'] = 1
+        # TODO: send to self.results
         self.alltests.append(test)
         self.fails.append(test)
 

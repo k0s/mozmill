@@ -62,15 +62,15 @@ class LoggerListener(object):
     return { 'mozmill.setTest': self.startTest,
              'mozmill.endTest': self.endTest }
 
-  def stop(self, fatal):
+  def stop(self, results):
     """print pass/failed/skipped statistics"""
 
     if fatal:
       print 'TEST-UNEXPECTED-FAIL | Disconnect Error: Application unexpectedly closed'
     
-    print "INFO Passed: %d" % len(self.mozmill.passes)
-    print "INFO Failed: %d" % len(self.mozmill.fails)
-    print "INFO Skipped: %d" % len(self.mozmill.skipped)
+    print "INFO Passed: %d" % len(results.passes)
+    print "INFO Failed: %d" % len(results.fails)
+    print "INFO Skipped: %d" % len(results.skipped)
 
   ### event listeners
 
