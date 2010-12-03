@@ -72,7 +72,11 @@ class TestResults(object):
         self.fails = []
         self.skipped = []
         self.alltests = []
-        self.starttime = 
+
+        # total test run time
+        # TODO: these endpoints are a bit vague as to where they live
+        self.starttime = datetime.now()
+        self.endtime = None
 
     def events(self):
         pass
@@ -94,12 +98,16 @@ class MozMill(object):
     run different sets of tests, create a new instantiation of MozMill
     """
 
-    def __init__(self, jsbridge_port=24242, jsbridge_timeout=60, handlers=()):
+    def __init__(self, results, jsbridge_port=24242, jsbridge_timeout=60, handlers=()):
         """
+        - results : a TestResults instance to accumulate results
         - jsbridge_port : port jsbridge uses to connect to to the application
         - jsbridge_timeout : how long to go without jsbridge communication
         - handlers : pluggable event handler
         """
+
+        # put your data here
+        self.results = results 
 
         # jsbridge parameters
         self.jsbridge_port = jsbridge_port
@@ -114,9 +122,6 @@ class MozMill(object):
         self.currentShutdownMode = self.shutdownModes.default
         self.userShutdownEnabled = False
 
-        # test time
-        self.starttime = self.endtime = None
-
         # setup event listeners
         self.global_listeners = []
         self.listeners = []
@@ -127,10 +132,8 @@ class MozMill(object):
         self.add_listener(self.userShutdown_listener, eventType='mozmill.userShutdown')
 
         # add listeners for event handlers
-        # XXX should be done in a better way
         self.handlers = handlers
         for handler in self.handlers:
-            handler.mozmill = self # XXX bad touch
             for event, method in handler.events().items():
                 self.add_listener(method, eventType=event)
             if hasattr(handler, '__call__'):
@@ -274,7 +277,6 @@ class MozMill(object):
                    'platform_version': str(appInfo.platformVersion),
                   }
         results.update(self.runner.get_repositoryInfo())
-
         return results
 
     ### methods for shutting down and cleanup
@@ -335,9 +337,6 @@ class MozMill(object):
     def stop(self, fatal=False):
         """cleanup and invoking of final handlers"""
 
-        # record test end time
-        self.endtime = datetime.utcnow()
-
         # handle stop events
         for handler in self.handlers:
             if hasattr(handler, 'stop'):
@@ -365,8 +364,6 @@ class MozMillRestart(MozMill):
         self.runner = runner
         self.endRunnerCalled = False
         self.add_listener(self.firePythonCallback_listener, eventType='mozmill.firePythonCallback')
-
-        self.starttime = datetime.utcnow()
      
     def firePythonCallback_listener(self, obj):
         if obj['fire_now']:

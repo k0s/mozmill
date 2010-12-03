@@ -74,6 +74,9 @@ class Report(object):
 
   def report_type(self):
     return 'NotImplementedError'
+    # XXX NOT SURE WHAT TO DO HERE
+    # if you're reporting across mozmill and mozmill-restart tests ...
+    # maybe this should live with the test metadata? ::shrug::
     mapping = {'MozMill': 'mozmill-test',
                'MozMillRestart': 'mozmill-restart-test',}
     return mapping[self.mozmill.__class__.__name__]
