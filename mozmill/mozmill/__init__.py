@@ -109,7 +109,6 @@ class MozMill(object):
         self.shutdownModes = enum('default', 'user_shutdown', 'user_restart')
         self.currentShutdownMode = self.shutdownModes.default
         self.userShutdownEnabled = False
-        self.tests = []
 
         # test time
         self.starttime = self.endtime = None
@@ -223,8 +222,6 @@ class MozMill(object):
         - sleeptime : initial time to sleep [s] (not sure why the default is 4)
         """
 
-        self.tests.extend(tests)
-
         frame = jsbridge.JSObject(self.bridge,
                                   "Components.utils.import('resource://mozmill/modules/frame.js')")
         sleep(sleeptime)
@@ -310,8 +307,7 @@ class MozMill(object):
                 self.runner.wait()
         else: # TODO: unify this logic with the above better
             if hard:
-                self.runner.kill()
-                self.runner.profile.cleanup()
+                self.runner.cleanup()
                 return
 
             # XXX this call won't actually finish in the specified timeout time
@@ -327,8 +323,7 @@ class MozMill(object):
                 x += 1
             else:
                 print "WARNING | endRunner was never called. There must have been a failure in the framework."
-                self.runner.stop()
-                self.runner.profile.cleanup()
+                self.runner.cleanup()
                 sys.exit(1)
 
     def stop(self, fatal=False):
@@ -348,7 +343,7 @@ class MozMill(object):
         # cleanup the profile if you need to
         if self.runner is not None:
             try:
-                self.runner.profile.cleanup()
+                self.runner.cleanup()
             except OSError:
                 pass # assume profile is already cleaned up
 
@@ -438,6 +433,8 @@ class MozMillRestart(MozMill):
         self.python_callbacks_module = None    
         
         # Reset the profile.
+        # XXX this is awful logic; profile should have a method just to
+        # clone :(
         profile = self.runner.profile
         profile.cleanup()
         if profile.create_new:
@@ -455,8 +452,6 @@ class MozMillRestart(MozMill):
         # XXX should document what this does...it seems out of place
         self.add_listener(self.firePythonCallback_listener, eventType='mozmill.firePythonCallback')
 
-        self.tests.extend(tests)
-
         for test_dir in tests:
 
             # XXX this allows for only one sub-level of test directories
@@ -473,7 +468,7 @@ class MozMillRestart(MozMill):
                 self.run_dir(d, sleeptime)
 
         # cleanup the profile
-        self.runner.profile.cleanup()
+        self.runner.cleanup()
 
         # Give a second for any pending callbacks to finish
         sleep(1) 
@@ -489,11 +484,7 @@ class MozMillRestart(MozMill):
         # expected that adding on more kills() for each edge case will ever
         # be able to fix a systematic issue by patching holes
         if fatal:
-            try:
-                self.runner.kill()
-                self.runner.profile.cleanup()
-            except:
-                pass                    
+            self.runner.cleanup()
 
 
 class CLI(jsbridge.CLI):
@@ -611,11 +602,16 @@ class CLI(jsbridge.CLI):
             # clean things up correctly on harness failures
             # Also, make the __del__ method of runner, profile, etc 
 
-            if normal_tests:
-                self.run_tests(MozMill, normal_tests, runner)
+            try:
+                if normal_tests:
+                    self.run_tests(MozMill, normal_tests, runner)
                 
-            if restart_tests:
-                self.run_tests(MozMillRestart, restart_tests, runner)
+                if restart_tests:
+                    self.run_tests(MozMillRestart, restart_tests, runner)
+
+            except:
+                runner.cleanup() # cleanly shutdown
+                raise
             
         else:
             raise Exception("no friggin tests")

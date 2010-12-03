@@ -199,6 +199,12 @@ class Runner(object):
         for name in self.aggressively_kill:
             kill_process_by_name(name)
 
+    def cleanup(self):
+        self.stop()
+        self.profile.cleanup()
+
+    __del__ = cleanup
+
 
 class FirefoxRunner(Runner):
     """Specialized Runner subclass for running Firefox."""
