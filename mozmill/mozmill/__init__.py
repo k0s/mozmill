@@ -518,7 +518,7 @@ class CLI(jsbridge.CLI):
             if self.options.restart:
                 test_dict['type'] = 'restart'
             
-            self.manifest.tests.append(test)
+            self.manifest.tests.append(test_dict)
 
     def add_options(self, parser):
         jsbridge.CLI.add_options(self, parser)
