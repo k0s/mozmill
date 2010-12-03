@@ -1,3 +1,7 @@
+"""
+logging event listener for Mozmill
+"""
+
 try:
     import json
 except:
@@ -10,6 +14,8 @@ class LoggerListener(object):
   ### methods for the EventHandler interface
 
   def __init__(self, showerrors=False, showall=False, logfile=None):
+
+    # initialize the logger
     self.logger = logging.getLogger('mozmill')
     log_options = { 'format': "%(levelname)s | %(message)s",
                     'level': logging.CRITICAL }
