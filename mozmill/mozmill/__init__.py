@@ -568,6 +568,27 @@ class CLI(jsbridge.CLI):
         if '-foreground' not in runner_args['cmdargs']:
             runner_args['cmdargs'].append('-foreground')
         return runner_args
+
+    def run_tests(self, mozmill_cls, tests, runner):
+        """
+        instantiate a mozmill object and run its tests
+        - mozmill_cls : class of Mozmill to instantiate (either MozMill or MozMillRestart)
+        - tests : test paths to run
+        - runner : instance of a MozRunner
+        """
+
+        # create a mozmill
+        mozmill = mozmill_cls(jsbridge_port=self.options.port,
+                              jsbridge_timeout=self.options.timeout,
+                              handlers=self.event_handlers
+                              )
+
+        # start your mozmill
+        mozmill.start(runner=runner)
+
+        # run the tests
+        mozmill.run(tests)
+
         
     def run(self):
 
@@ -584,7 +605,6 @@ class CLI(jsbridge.CLI):
         # create a Mozrunner
         runner = self.create_runner()
 
-
         if normal_tests or restart_tests:
 
             # TODO: wrap all of this in a try: except: so that you can
@@ -592,23 +612,11 @@ class CLI(jsbridge.CLI):
             # Also, make the __del__ method of runner, profile, etc 
 
             if normal_tests:
-                
-                # create a mozmill
-                mozmill = MozMill(jsbridge_port=int(self.options.port),                                  
-                                  jsbridge_timeout=self.options.timeout,
-                                  handlers=self.event_handlers
-                                  )
-                
-                # start your mozmill
-                mozmill.start(runner=runner)
-
-                # run your tests
-                mozmill.run(normal_tests)
+                self.run_tests(MozMill, normal_tests, runner)
                 
             if restart_tests:
-                raise NotImplementedError
+                self.run_tests(MozMillRestart, restart_tests, runner)
             
-            self.mozmill.run(self.tests)
         else:
             raise Exception("no friggin tests")
 
