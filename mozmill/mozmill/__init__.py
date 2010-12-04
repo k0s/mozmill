@@ -53,10 +53,9 @@ from datetime import datetime, timedelta
 from manifestdestiny import manifests
 from time import sleep
 
+# metadata
 basedir = os.path.abspath(os.path.dirname(__file__))
-
 extension_path = os.path.join(basedir, 'extension')
-
 mozmillModuleJs = "Components.utils.import('resource://mozmill/modules/mozmill.js')"
 
 class TestsFailedException(Exception):
@@ -79,11 +78,29 @@ class TestResults(object):
         self.endtime = None
 
     def events(self):
-        pass
+        """events the MozMill class will dispatch to"""
+        return {'mozmill.endTest': self.endTest_listener}
 
-    def stop(self, handlers):
+    def stop(self, handlers, fatal=False):
         """do final reporting and such"""
         self.endtime = datetime.utcnow()
+
+        # handle stop events
+        for handler in handlers:
+            if hasattr(handler, 'stop'):
+                handler.stop(self, fatal)
+
+    ### event listener
+
+    def endTest_listener(self, test):
+        self.alltests.append(test)
+        if test.get('skipped', False):
+            self.skipped.append(test)
+        elif test['failed'] > 0:
+            self.fails.append(test)
+        else:
+            self.passes.append(test)
+
 
 class MozMill(object):
     """
@@ -113,10 +130,7 @@ class MozMill(object):
         self.jsbridge_port = jsbridge_port
         self.jsbridge_timeout = jsbridge_timeout
 
-        # test parameters: filled in from event system
-        self.passes = [] ; self.fails = [] ; self.skipped = []
-        self.alltests = []
-
+        #
         self.persisted = {}
         self.shutdownModes = enum('default', 'user_shutdown', 'user_restart')
         self.currentShutdownMode = self.shutdownModes.default
@@ -132,7 +146,8 @@ class MozMill(object):
         self.add_listener(self.userShutdown_listener, eventType='mozmill.userShutdown')
 
         # add listeners for event handlers
-        self.handlers = handlers
+        self.handlers = [results]
+        self.handlers.extend(handlers)
         for handler in self.handlers:
             for event, method in handler.events().items():
                 self.add_listener(method, eventType=event)
@@ -151,15 +166,6 @@ class MozMill(object):
 
     def startTest_listener(self, test):
         self.current_test = test
-
-    def endTest_listener(self, test):
-        self.alltests.append(test)
-        if test.get('skipped', False):
-            self.skipped.append(test)
-        elif test['failed'] > 0:
-            self.fails.append(test)
-        else:
-            self.passes.append(test)
 
     def endRunner_listener(self, obj):
         self.endRunnerCalled = True
@@ -219,7 +225,7 @@ class MozMill(object):
         self.runner.start()
         self.create_network()
 
-        self.appinfo = self.get_appinfo(self.bridge)
+        results.appinfo = self.get_appinfo(self.bridge)
 
 
     def run_tests(self, tests, sleeptime=4):
@@ -259,9 +265,7 @@ class MozMill(object):
         # shutdown the test harness
         self.stop(fatal=disconnected)
 
-        # exit (could be moved up to CLI)
-        if self.fails or disconnected:
-            sys.exit(1)
+        # TODO: raise the disconnect error !!!
 
     def get_appinfo(self, bridge):
         """ Collect application specific information """
@@ -291,9 +295,11 @@ class MozMill(object):
         }]
         test['passed'] = 0
         test['failed'] = 1
-        # TODO: send to self.results
-        self.alltests.append(test)
-        self.fails.append(test)
+
+        # send to self.results
+        # XXX bad touch
+        self.results.alltests.append(test)
+        self.results.fails.append(test)
 
     def stop_runner(self, timeout=30, close_bridge=False, hard=False):
         sleep(1)
@@ -337,11 +343,6 @@ class MozMill(object):
     def stop(self, fatal=False):
         """cleanup and invoking of final handlers"""
 
-        # handle stop events
-        for handler in self.handlers:
-            if hasattr(handler, 'stop'):
-                handler.stop(fatal)
-
         # stop the runner
         self.stop_runner(timeout=10, close_bridge=True, hard=fatal)
 
@@ -378,7 +379,7 @@ class MozMillRestart(MozMill):
             self.runner.start()
 
         self.create_network()
-        self.appinfo = self.get_appinfo(self.bridge)
+        results.appinfo = self.get_appinfo(self.bridge)
         frame = jsbridge.JSObject(self.bridge,
                                   "Components.utils.import('resource://mozmill/modules/frame.js')")
         return frame
@@ -563,7 +564,7 @@ class CLI(jsbridge.CLI):
             runner_args['cmdargs'].append('-foreground')
         return runner_args
 
-    def run_tests(self, mozmill_cls, tests, runner):
+    def run_tests(self, mozmill_cls, tests, runner, results):
         """
         instantiate a mozmill object and run its tests
         - mozmill_cls : class of Mozmill to instantiate (either MozMill or MozMillRestart)
@@ -572,7 +573,8 @@ class CLI(jsbridge.CLI):
         """
 
         # create a mozmill
-        mozmill = mozmill_cls(jsbridge_port=self.options.port,
+        mozmill = mozmill_cls(results,
+                              jsbridge_port=self.options.port,
                               jsbridge_timeout=self.options.timeout,
                               handlers=self.event_handlers
                               )
@@ -595,6 +597,9 @@ class CLI(jsbridge.CLI):
             else:
                 normal_tests.append(test['path'])
             # TODO: should probably pass the whole test, maybe?
+
+        # create a place to put results
+        results = TestResults()
         
         # create a Mozrunner
         runner = self.create_runner()
@@ -607,15 +612,25 @@ class CLI(jsbridge.CLI):
 
             try:
                 if normal_tests:
-                    self.run_tests(MozMill, normal_tests, runner)
+                    self.run_tests(MozMill, normal_tests, runner, results)
                 
                 if restart_tests:
                     self.run_tests(MozMillRestart, restart_tests, runner)
 
-            except:
+            except Exception, e:
                 runner.cleanup() # cleanly shutdown
                 raise
-            
+
+            # do whatever reporting you're going to do
+            results.stop(self.event_handlers)
+
+            # exit
+            # TODO: check for disconnect
+            if results.fails: # or disconnected:
+                sys.exit(1)
+
+            # TODO: could return results
+
         else:
             raise Exception("no friggin tests")
 

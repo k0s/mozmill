@@ -62,7 +62,7 @@ class LoggerListener(object):
     return { 'mozmill.setTest': self.startTest,
              'mozmill.endTest': self.endTest }
 
-  def stop(self, results):
+  def stop(self, results, fatal):
     """print pass/failed/skipped statistics"""
 
     if fatal:
