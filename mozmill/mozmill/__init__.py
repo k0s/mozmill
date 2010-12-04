@@ -140,7 +140,6 @@ class MozMill(object):
         self.global_listeners = []
         self.listeners = []
         self.add_listener(self.persist_listener, eventType="mozmill.persist")
-        self.add_listener(self.endTest_listener, eventType='mozmill.endTest')
         self.add_listener(self.endRunner_listener, eventType='mozmill.endRunner')
         self.add_listener(self.startTest_listener, eventType='mozmill.setTest')
         self.add_listener(self.userShutdown_listener, eventType='mozmill.userShutdown')
@@ -225,7 +224,7 @@ class MozMill(object):
         self.runner.start()
         self.create_network()
 
-        results.appinfo = self.get_appinfo(self.bridge)
+        self.results.appinfo = self.get_appinfo(self.bridge)
 
 
     def run_tests(self, tests, sleeptime=4):
@@ -379,7 +378,7 @@ class MozMillRestart(MozMill):
             self.runner.start()
 
         self.create_network()
-        results.appinfo = self.get_appinfo(self.bridge)
+        self.results.appinfo = self.get_appinfo(self.bridge)
         frame = jsbridge.JSObject(self.bridge,
                                   "Components.utils.import('resource://mozmill/modules/frame.js')")
         return frame

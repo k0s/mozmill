@@ -72,6 +72,7 @@ class Runner(object):
             self.env = env
         self.aggressively_kill = aggressively_kill
         self.kp_kwargs = kp_kwargs or {}
+        self.process_handler = None
 
     @classmethod
     def get_binary(cls, binary=None):
@@ -183,7 +184,10 @@ class Runner(object):
                     self.process_handler.wait(timeout=timeout)
 
     def stop(self, kill_signal=signal.SIGTERM):
-        """Kill the browser"""
+        """Kill the app"""
+        if self.process_handler is None:
+            return
+        
         if sys.platform != 'win32':
             self.process_handler.kill()
             for name in self.names:
