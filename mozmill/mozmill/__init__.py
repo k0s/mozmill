@@ -264,14 +264,14 @@ class MozMill(object):
         # shutdown the test harness
         self.stop(fatal=disconnected)
 
-        # TODO: raise the disconnect error !!!
+        if disconnected:
+            # raise the disconnect error
+            raise
 
     def get_appinfo(self, bridge):
         """ Collect application specific information """
-
         mozmill = jsbridge.JSObject(bridge, mozmillModuleJs)
         appInfo = mozmill.appInfo
-
         results = {'application_id': str(appInfo.ID),
                    'application_name': str(appInfo.name),
                    'application_version': str(appInfo.version),
@@ -605,9 +605,7 @@ class CLI(jsbridge.CLI):
 
         if normal_tests or restart_tests:
 
-            # TODO: wrap all of this in a try: except: so that you can
-            # clean things up correctly on harness failures
-            # Also, make the __del__ method of runner, profile, etc 
+            e = None # runtime exception
 
             try:
                 if normal_tests:
@@ -624,8 +622,9 @@ class CLI(jsbridge.CLI):
             results.stop(self.event_handlers)
 
             # exit
-            # TODO: check for disconnect
-            if results.fails: # or disconnected:
+            if e:
+                raise
+            if results.fails:
                 sys.exit(1)
 
             # TODO: could return results
