@@ -494,8 +494,7 @@ class MozMill(object):
                 self.runner.wait()
         else: # TODO: unify this logic with the above better
             if hard:
-                self.runner.kill()
-                self.runner.profile.cleanup()
+                self.runner.cleanup()
                 return
 
             # XXX this call won't actually finish in the specified timeout time
@@ -511,8 +510,7 @@ class MozMill(object):
                 x += 1
             else:
                 print "WARNING | endRunner was never called. There must have been a failure in the framework."
-                self.runner.kill()
-                self.runner.profile.cleanup()
+                self.runner.cleanup()
                 sys.exit(1)
 
     def stop(self, fatal=False):
