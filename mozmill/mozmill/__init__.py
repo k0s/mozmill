@@ -130,8 +130,10 @@ class MozMill(object):
         self.jsbridge_port = jsbridge_port
         self.jsbridge_timeout = jsbridge_timeout
 
-        #
+        # persisted data
         self.persisted = {}
+
+        # shutdown parameters
         self.shutdownModes = enum('default', 'user_shutdown', 'user_restart')
         self.currentShutdownMode = self.shutdownModes.default
         self.userShutdownEnabled = False
@@ -597,53 +599,42 @@ class CLI(jsbridge.CLI):
                 normal_tests.append(test['path'])
             # TODO: should probably pass the whole test, maybe?
 
+        # make sure you have tests to run
+        if not (normal_tests or restart_tests):
+            self.parser.error("No tests found. Please specify tests with -t or -m")
+
         # create a place to put results
         results = TestResults()
         
         # create a Mozrunner
         runner = self.create_runner()
 
-        if normal_tests or restart_tests:
 
-            e = None # runtime exception
-
-            try:
-                if normal_tests:
-                    self.run_tests(MozMill, normal_tests, runner, results)
+        # run the tests
+        e = None # runtime exception
+        try:
+            if normal_tests:
+                self.run_tests(MozMill, normal_tests, runner, results)
                 
-                if restart_tests:
-                    self.run_tests(MozMillRestart, restart_tests, runner)
+            if restart_tests:
+                self.run_tests(MozMillRestart, restart_tests, runner)
 
-            except Exception, e:
-                runner.cleanup() # cleanly shutdown
-                raise
+        except Exception, e:
+            runner.cleanup() # cleanly shutdown
+            raise
 
-            # do whatever reporting you're going to do
-            results.stop(self.event_handlers)
+        # do whatever reporting you're going to do
+        results.stop(self.event_handlers)
 
-            # exit
-            if e:
-                raise
-            if results.fails:
-                sys.exit(1)
+        # exit on bad stuff happen
+        if e:
+            raise
+        if results.fails:
+            sys.exit(1)
 
-            # TODO: could return results
-
-        else:
-            raise Exception("no friggin tests")
-
-#         else:
-#             # TODO: document use case
-#             # probably take out of this function entirely
-#             if self.options.shell:
-#                 self.start_shell(runner)
-#             else:
-#                 try:
-#                     if not hasattr(runner, 'process_handler'):
-#                         runner.start()
-#                     runner.wait()
-#                 except KeyboardInterrupt:
-#                     runner.stop()
+        # return results on success [currently unused]
+        return results
+        
 
 def enum(*sequential, **named):
     # XXX to deprecate
