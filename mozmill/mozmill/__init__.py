@@ -347,13 +347,9 @@ class MozMill(object):
         # stop the runner
         self.stop_runner(timeout=10, close_bridge=True, hard=fatal)
 
-        # cleanup the profile if you need to
+        # cleanup 
         if self.runner is not None:
-            try:
-                self.runner.cleanup()
-            except OSError:
-                pass # assume profile is already cleaned up
-
+            self.runner.cleanup()
 
 class MozMillRestart(MozMill):
 
@@ -438,8 +434,8 @@ class MozMillRestart(MozMill):
         self.python_callbacks_module = None    
         
         # Reset the profile.
-        # XXX this is awful logic; profile should have a method just to
-        # clone :(
+        # XXX profile should have a method just to clone:
+        # https://bugzilla.mozilla.org/show_bug.cgi?id=585106
         profile = self.runner.profile
         profile.cleanup()
         if profile.create_new:
@@ -481,13 +477,6 @@ class MozMillRestart(MozMill):
     def stop(self, fatal=False):
         """MozmillRestart doesn't need to do cleanup as this is already done per directory"""
 
-        # XXX this is a one-off to fix bug 581733
-        # really, the entire shutdown sequence should be reconsidered and
-        # made more robust. 
-        # See https://bugzilla.mozilla.org/show_bug.cgi?id=581733#c20
-        # This will *NOT* work with all edge cases and it shouldn't be
-        # expected that adding on more kills() for each edge case will ever
-        # be able to fix a systematic issue by patching holes
         if fatal:
             self.runner.cleanup()
 
