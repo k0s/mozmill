@@ -45,8 +45,6 @@ import tempfile
 import zipfile
 from xml.dom import minidom
 
-from utils import makedirs
-
 try:
     import simplejson
 except ImportError:
