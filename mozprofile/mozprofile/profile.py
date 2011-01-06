@@ -137,13 +137,14 @@ class Profile(object):
                 compressed_file = zipfile.ZipFile(addon, "r")
                 for name in compressed_file.namelist():
                     if name.endswith('/'):
-                        makedirs(os.path.join(tmpdir, name))
+                        os.makedirs(os.path.join(tmpdir, name))
                     else:
                         if not os.path.isdir(os.path.dirname(os.path.join(tmpdir, name))):
-                            makedirs(os.path.dirname(os.path.join(tmpdir, name)))
+                            os.makedirs(os.path.dirname(os.path.join(tmpdir, name)))
                         data = compressed_file.read(name)
                         f = open(os.path.join(tmpdir, name), 'wb')
-                        f.write(data) ; f.close()
+                        f.write(data)
+                        f.close()
                 addon = tmpdir
 
             # determine the addon id
