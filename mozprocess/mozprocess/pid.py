@@ -47,7 +47,7 @@ def get_pids(name, minimun_pid=0):
   """Get all the pids matching name, exclude any pids below minimum_pid."""
   # XXX see also https://bugzilla.mozilla.org/show_bug.cgi?id=592750
   
-  if os.name == 'nt' or sys.platform == 'cygwin':
+  if mozinfo.os == 'win':
     import wpk
     pids = wpk.get_pids(name)
   else:

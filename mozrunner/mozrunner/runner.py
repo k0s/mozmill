@@ -39,10 +39,11 @@
 
 __all__ = ['Runner', 'ThunderbirdRunner', 'FirefoxRunner', 'create_runner', 'CLI', 'cli']
 
+import mozinfo
+import optparse
 import os
 import sys
 import signal
-import optparse
 import ConfigParser
 
 from utils import findInPath
@@ -76,8 +77,7 @@ class Runner(object):
         """determine the binary"""
         if binary is None:
             return cls.find_binary()
-        elif sys.platform == 'darwin' and binary.find('Contents/MacOS/') == -1:
-            # TODO FIX ME!!!
+        elif mozinfo.os == 'mac' and binary.find('Contents/MacOS/') == -1:
             return os.path.join(binary, 'Contents/MacOS/%s-bin' % cls.names[0])
         else:
             return binary
@@ -87,10 +87,10 @@ class Runner(object):
         """Finds the binary for class names if one was not provided."""
 
         binary = None
-        if sys.platform in ('linux2', 'sunos5', 'solaris'):
+        if mozinfo.os in ('linux', 'unix'):
             for name in reversed(cls.names):
                 binary = findInPath(name)
-        elif os.name == 'nt' or sys.platform == 'cygwin':
+        elif mozinfo.os == 'win':
 
             # find the default executable from the windows registry
             try:
@@ -123,7 +123,7 @@ class Runner(object):
                         if os.path.isfile(path):
                             binary = path
                             break
-        elif sys.platform == 'darwin':
+        elif mozinfo.os == 'mac':
             for name in reversed(cls.names):
                 appdir = os.path.join('Applications', name.capitalize()+'.app')
                 if os.path.isdir(os.path.join(os.path.expanduser('~/'), appdir)):
@@ -137,6 +137,7 @@ class Runner(object):
                         binary = binary.replace(name+'-bin', 'firefox-bin')
                     if not os.path.isfile(binary):
                         binary = None
+                        
         if binary is None:
             raise Exception('Mozrunner could not locate your binary, you will need to set it.')
         return binary
@@ -174,7 +175,7 @@ class Runner(object):
         """Wait for the browser to exit."""
         self.process_handler.wait(timeout=timeout)
 
-        if sys.platform != 'win32':
+        if mozinfo.os != 'win':
             for name in self.names:
                 for pid in get_pids(name, self.process_handler.pid):
                     self.process_handler.pid = pid
@@ -185,17 +186,17 @@ class Runner(object):
         if self.process_handler is None:
             return
         
-        if sys.platform != 'win32':
+        if mozinfo.os == 'win':
+            try:
+                self.process_handler.kill(group=True)
+            except Exception, e:
+                raise Exception('Cannot kill process, '+type(e).__name__+' '+e.message)
+        else:
             self.process_handler.kill()
             for name in self.names:
                 for pid in get_pids(name, self.process_handler.pid):
                     self.process_handler.pid = pid
                     self.process_handler.kill()
-        else:
-            try:
-                self.process_handler.kill(group=True)
-            except Exception, e:
-                raise Exception('Cannot kill process, '+type(e).__name__+' '+e.message)
 
     def cleanup(self):
         self.stop()
@@ -209,20 +210,17 @@ class FirefoxRunner(Runner):
 
     app_name = 'Firefox'
     profile_class = FirefoxProfile
-
-    if sys.platform == 'darwin':
-        names = ['firefox', 'minefield', 'shiretoko']
-    elif (sys.platform == 'linux2') or (sys.platform in ('sunos5', 'solaris')):
-        names = ['firefox', 'mozilla-firefox', 'iceweasel']
-    elif os.name == 'nt' or sys.platform == 'cygwin':
-        names =['firefox']
-    else:
+    names = {'win': ['firefox'],
+             'mac': ['firefox', 'minefield', 'shiretoko'],
+             'linux': ['firefox', 'mozilla-firefox', 'iceweasel'],
+             'unix': ['firefox', 'mozilla-firefox', 'iceweasel']}.get(mozinfo.os)
+    if names is None:
         raise AssertionError("I don't know what platform you're on")
+
 
 class ThunderbirdRunner(Runner):
     """Specialized Runner subclass for running Thunderbird"""
     app_name = 'Thunderbird'
-
     names = ["thunderbird", "shredder"]
 
 def create_runner(profile_class, runner_class,
@@ -327,9 +325,7 @@ class CLI(object):
     def run(self):
         runner = self.create_runner()
         self.start(runner)
-        # XXX should be runner.cleanup,
-        # and other runner cleanup code should go in there
-        runner.profile.cleanup()
+        runner.cleanup()
 
     def start(self, runner):
         """Starts the runner and waits for Firefox to exitor Keyboard Interrupt.

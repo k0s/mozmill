@@ -18,6 +18,7 @@ setup(name='mozprocess',
       zip_safe=False,
       install_requires=[
           # -*- Extra requirements: -*-
+          'mozinfo',
       ],
       entry_points="""
       # -*- Entry points: -*-

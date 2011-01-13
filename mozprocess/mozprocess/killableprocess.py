@@ -47,13 +47,14 @@ Windows 95, 98, or NT 4.0). It also requires ctypes, which is bundled with
 Python 2.5+ or available from http://python.net/crew/theller/ctypes/
 """
 
+import datetime
+import exceptions
+import mozinfo
+import os
 import subprocess
 import sys
-import os
 import time
-import datetime
 import types
-import exceptions
 
 try:
     from subprocess import CalledProcessError
@@ -69,9 +70,7 @@ except ImportError:
         def __str__(self):
             return "Command '%s' returned non-zero exit status %d" % (self.cmd, self.returncode)
 
-mswindows = (sys.platform == "win32")
-
-if mswindows:
+if mozinfo.os == 'win':
     import winprocess
 else:
     import signal
@@ -94,13 +93,9 @@ def check_call(*args, **kwargs):
             cmd = args[0]
         raise CalledProcessError(retcode, cmd)
 
-if not mswindows:
-    def DoNothing(*args):
-        pass
-
 class Popen(subprocess.Popen):
     kill_called = False
-    if mswindows:
+    if mozinfo.os == 'win':
         def _execute_child(self, args, executable, preexec_fn, close_fds,
                            cwd, env, universal_newlines, startupinfo,
                            creationflags, shell,
@@ -173,7 +168,7 @@ class Popen(subprocess.Popen):
     def kill(self, group=True):
         """Kill the process. If group=True, all sub-processes will also be killed."""
         self.kill_called = True
-        if mswindows:
+        if mozinfo.os == 'win':
             if group and self._job:
                 winprocess.TerminateJobObject(self._job, 127)
             else:
@@ -207,7 +202,7 @@ class Popen(subprocess.Popen):
 
         starttime = datetime.datetime.now()
 
-        if mswindows:
+        if mozinfo.os == 'win':
             if timeout is None:
                 timeout = -1
             rc = winprocess.WaitForSingleObject(self._handle, timeout)
@@ -233,14 +228,14 @@ class Popen(subprocess.Popen):
             else:
                 self.returncode = winprocess.GetExitCodeProcess(self._handle)
         else:
-            if (sys.platform == 'linux2') or (sys.platform in ('sunos5', 'solaris')):
+            if mozinfo.os in ('linux', 'unix'):
                 def group_wait(timeout):
                     try:
                         os.waitpid(self.pid, 0)
                     except OSError, e:
                         pass # If wait has already been called on this pid, bad things happen
                     return self.returncode
-            elif sys.platform == 'darwin':
+            elif mozinfo.os == 'mac':
                 def group_wait(timeout):
                     try:
                         count = 0
@@ -286,7 +281,7 @@ def setpgid_preexec_fn():
     os.setpgid(0, 0)
         
 def runCommand(cmd, **kwargs):
-    if sys.platform != "win32":
+    if mozinfo.os == 'win':
         return Popen(cmd, preexec_fn=setpgid_preexec_fn, **kwargs)
     else:
         return Popen(cmd, **kwargs)

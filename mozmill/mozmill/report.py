@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import httplib
+import mozinfo
 import sys
 import urllib
 import urlparse
@@ -69,17 +70,8 @@ class Report(object):
                       help="Report the results. Requires url to results server. Use 'stdout' for stdout.")
 
   def stop(self, results, fatal=False):
-    results = self.get_report()
-    return self.send_report(results, self.report)
-
-  def report_type(self):
-    return 'NotImplementedError'
-    # XXX NOT SURE WHAT TO DO HERE
-    # if you're reporting across mozmill and mozmill-restart tests ...
-    # maybe this should live with the test metadata? ::shrug::
-    mapping = {'MozMill': 'mozmill-test',
-               'MozMillRestart': 'mozmill-restart-test',}
-    return mapping[self.mozmill.__class__.__name__]
+    report = self.get_report(results)
+    return self.send_report(report, self.report)
 
   def get_report(self, results):
     """get the report results"""
@@ -95,7 +87,7 @@ class Report(object):
               }
 
     report.update(results.appinfo)
-    report['system_info'] = get_platform_information()
+ 
     
     return report
 
