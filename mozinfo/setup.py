@@ -1,13 +1,20 @@
+import os
 from setuptools import setup, find_packages
+
+try:
+    here = os.path.dirname(os.path.abspath(__file__))
+    description = file(os.path.join(here, 'README.txt')).read()
+except IOError:
+    description = None
 
 version = '0.1'
 
 setup(name='mozinfo',
       version=version,
       description="file for interface to transform introspected system information to a format pallatable to Mozilla",
-      long_description='',
+      long_description=description,
       classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
-      keywords='',
+      keywords='mozilla',
       author='Jeff Hammel',
       author_email='jhammel@mozilla.com',
       url='https://wiki.mozilla.org/Auto-tools',
