@@ -48,7 +48,6 @@ try:
 except:
   import simplejson as json
 
-from info import get_platform_information
 from handlers import HandlerMatchException
 
 class Report(object):
@@ -76,8 +75,7 @@ class Report(object):
   def get_report(self, results):
     """get the report results"""
 
-    report = {'report_type': self.report_type(),
-              'time_start': results.starttime.strftime(self.date_format),
+    report = {'time_start': results.starttime.strftime(self.date_format),
               'time_end': results.endtime.strftime(self.date_format),
               'time_upload': 'n/a',
               'tests_passed': len(results.passes),
@@ -87,7 +85,12 @@ class Report(object):
               }
 
     report.update(results.appinfo)
- 
+    report['system_info'] = {'hostname': mozinfo.hostname,
+                             'system': mozinfo.os,
+                             'version': mozinfo.version,
+                             'bits': str(mozinfo.bits),
+                             'processor': mozinfo.processor,
+                            }                   
     
     return report
 

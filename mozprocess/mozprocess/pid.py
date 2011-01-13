@@ -39,6 +39,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import mozinfo
 import os
 import subprocess
 import sys
