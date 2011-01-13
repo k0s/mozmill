@@ -148,7 +148,8 @@ def main(args=None):
     flag = False
     for key, value in options.__dict__.items():
         if value is True:
-            print '%s choices: %s' % (key, ' '.join(choices[key]))
+            print '%s choices: %s' % (key, ' '.join([str(choice)
+                                                     for choice in choices[key]]))
             flag = True
     if flag: return
 
