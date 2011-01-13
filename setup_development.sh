@@ -1,5 +1,6 @@
 #!/bin/bash
-for i in mozprocess mozprofile mozrunner jsbridge mozmill 
+# in order dependencies
+for i in mozinfo mozprocess mozprofile mozrunner jsbridge mozmill 
 do 
     cd $i
     python setup.py develop
