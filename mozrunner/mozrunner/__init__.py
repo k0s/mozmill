@@ -331,16 +331,20 @@ class Runner(object):
     """Handles all running operations. Finds bins, runs and kills the process."""
 
     def __init__(self, binary=None, profile=None, cmdargs=[], env=None, kp_kwargs={}):
+
+        self.process_handler = None
+
+        # find the binary
         if binary is None:
             self.binary = self.find_binary()
         elif sys.platform == 'darwin' and binary.find('Contents/MacOS/') == -1:
             self.binary = os.path.join(binary, 'Contents/MacOS/%s-bin' % self.names[0])
         else:
             self.binary = binary
-
         if not os.path.exists(self.binary):
             raise Exception("Binary path does not exist "+self.binary)
 
+        
         if sys.platform == 'linux2' and self.binary.endswith('-bin'):
             dirname = os.path.dirname(self.binary)
             if os.environ.get('LD_LIBRARY_PATH', None):
@@ -467,6 +471,10 @@ class Runner(object):
 
     def stop(self, kill_signal=signal.SIGTERM):
         """Kill the browser"""
+
+        if not self.process_handler:
+            return
+        
         if sys.platform != 'win32':
             self.process_handler.kill()
             for name in self.names:
@@ -481,7 +489,8 @@ class Runner(object):
 
     def cleanup(self):
         self.stop()
-        self.profile.cleanup()
+        if self.profile:
+            self.profile.cleanup()
 
     __del__ = cleanup
     
