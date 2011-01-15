@@ -183,16 +183,17 @@ class Profile(object):
                 # remove targetApplication nodes, they contain id's we aren't interested in
                 apps = elem.getElementsByTagName('em:targetApplication')
                 apps.extend(elem.getElementsByTagName('targetApplication'))
-                for app in apps:
-                    elem.removeChild(app)
+                if apps:
+                    for app in apps:
+                        elem.removeChild(app)
 
-                # find the id tag
-                if elem.getElementsByTagName('em:id'):
-                    addon_id = str(elem.getElementsByTagName('em:id')[0].firstChild.data)
-                elif elem.hasAttribute('em:id'):
-                    addon_id = str(elem.getAttribute('em:id'))
-                elif elem.getElementsByTagName('id'):
-                    addon_id = str(elem.getElementsByTagName('id')[0].firstChild.data)
+                    # find the id tag
+                    if elem.getElementsByTagName('em:id'):
+                        addon_id = str(elem.getElementsByTagName('em:id')[0].firstChild.data)
+                    elif elem.hasAttribute('em:id'):
+                        addon_id = str(elem.getAttribute('em:id'))
+                    elif elem.getElementsByTagName('id'):
+                        addon_id = str(elem.getElementsByTagName('id')[0].firstChild.data)
                         
             return addon_id
 
