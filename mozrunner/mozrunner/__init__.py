@@ -186,7 +186,7 @@ class Profile(object):
                 if apps:
                     for app in apps:
                         elem.removeChild(app)
-
+                        
                     # find the id tag
                     if elem.getElementsByTagName('em:id'):
                         addon_id = str(elem.getElementsByTagName('em:id')[0].firstChild.data)
@@ -198,7 +198,7 @@ class Profile(object):
             return addon_id
 
         doc = minidom.parse(os.path.join(addon_path, 'install.rdf')) 
-
+        
         for tag in 'Description', 'RDF:Description':
             desc = doc.getElementsByTagName(tag)
             addon_id = find_id(desc)
