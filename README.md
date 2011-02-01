@@ -3,7 +3,7 @@
 
 # Installation
 
-Install the command-line client via either setuptools or pip ([detailed instructions](https://developer.mozilla.org/en/Mozmill#The_Command_Line_Client)):
+Install the command-line client via setuptools or pip ([detailed instructions](https://developer.mozilla.org/en/Mozmill#The_Command_Line_Client)):
 	pip install mozmill
 	
 To work with the development version of Mozmill, check out the code from the [Github repo](http://github.com/mozautomation/mozmill):
