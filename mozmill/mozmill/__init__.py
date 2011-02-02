@@ -436,20 +436,8 @@ class MozMillRestart(MozMill):
         
         self.python_callbacks_module = None    
         
-        # Reset the profile.
-        # XXX profile should have a method just to clone:
-        # https://bugzilla.mozilla.org/show_bug.cgi?id=585106
-        profile = self.runner.profile
-        profile.cleanup()
-        if profile.create_new:
-            profile.profile = profile.create_new_profile(self.runner.binary)                
-        for addon in profile.addons:
-            profile.install_addon(addon)
-        if jsbridge.extension_path not in profile.addons:
-            profile.install_addon(jsbridge.extension_path)
-        if extension_path not in profile.addons:
-            profile.install_addon(extension_path)
-        profile.set_preferences(profile.preferences)
+        # Reset the runner + profile.
+        self.runner.reset()
     
     def run_tests(self, tests, sleeptime=0):
 
@@ -614,7 +602,7 @@ class CLI(mozrunner.CLI):
 
 
         # run the tests
-        e = None # runtime exception
+        exception = None # runtime exception
         try:
             if normal_tests:
                 self.run_tests(MozMill, normal_tests, runner, results)
@@ -623,16 +611,16 @@ class CLI(mozrunner.CLI):
                 self.run_tests(MozMillRestart, restart_tests, runner, results)
 
         except:
-            _, e, _ = sys.exc_info()
+            exception_type, exception, tb = sys.exc_info()
             runner.cleanup() # cleanly shutdown
 
         # do whatever reporting you're going to do
         results.stop(self.event_handlers)
 
         # exit on bad stuff happen
-        if e:
-            raise e
-        if results.fails:
+        if exception:
+            traceback.print_exception(exception_type, exception, tb)
+        if exception or results.fails:
             sys.exit(1)
 
         # return results on success [currently unused]
