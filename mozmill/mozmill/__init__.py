@@ -108,13 +108,13 @@ class MozMill(object):
     MozMill is a test runner  You should use MozMill as follows:
 
     m = MozMill(...)
-    m.start(...)
     m.run(tests)
     m.stop()
     """
 
     def __init__(self, runner, results, jsbridge_port=24242, jsbridge_timeout=60, handlers=()):
         """
+        - runner : a MozRunner instance to run the app
         - results : a TestResults instance to accumulate results
         - jsbridge_port : port jsbridge uses to connect to to the application
         - jsbridge_timeout : how long to go without jsbridge communication
