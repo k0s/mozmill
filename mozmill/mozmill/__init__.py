@@ -105,15 +105,12 @@ class TestResults(object):
 
 class MozMill(object):
     """
-    MozMill is a one-shot test runner  You should use MozMill as follows:
+    MozMill is a test runner  You should use MozMill as follows:
 
     m = MozMill(...)
     m.start(...)
-    m.run_tests()
+    m.run(tests)
     m.stop()
-
-    You should *NOT* vary from this order of execution.  If you have need to
-    run different sets of tests, create a new instantiation of MozMill
     """
 
     def __init__(self, results, jsbridge_port=24242, jsbridge_timeout=60, handlers=()):
@@ -124,9 +121,7 @@ class MozMill(object):
         - handlers : pluggable event handler
         """
 
-        self.endRunnerCalled = False
-
-        # put your data here
+        # mozmill puts your data here
         self.results = results 
 
         # jsbridge parameters
@@ -140,6 +135,7 @@ class MozMill(object):
         self.shutdownModes = enum('default', 'user_shutdown', 'user_restart')
         self.currentShutdownMode = self.shutdownModes.default
         self.userShutdownEnabled = False
+        self.endRunnerCalled = False
 
         # setup event listeners
         self.global_listeners = []
@@ -161,7 +157,7 @@ class MozMill(object):
         # disable the crashreporter
         os.environ['MOZ_CRASHREPORTER_NO_REPORT'] = '1'
 
-    ### methods for listeners
+    ### methods for event listeners
 
     def add_listener(self, callback, **kwargs):
         self.listeners.append((callback, kwargs,))
@@ -206,6 +202,7 @@ class MozMill(object):
         self.runner = runner
 
     def start_runner(self):
+        """start the MozRunner"""
 
         # if user_restart we don't need to start the browser back up
         if self.currentShutdownMode != self.shutdownModes.user_restart:
@@ -242,6 +239,10 @@ class MozMill(object):
         # run tests
         for test in tests:
           frame.runTestFile(test['path'])
+          while not self.endRunnerCalled:
+              # XXX could cause infinite loop
+              sleep(.25)
+          self.currentShutdownMode = self.shutdownModes.default
 
         # Give a second for any callbacks to finish.
         sleep(1)
@@ -259,10 +260,10 @@ class MozMill(object):
             disconnected = True
             if not self.userShutdownEnabled:
                 self.report_disconnect()
-            raise
+                raise
             
         # shutdown the test harness
-        self.stop(fatal=disconnected)
+#        self.stop(fatal=disconnected)
 
         if disconnected:
             # raise the disconnect error
@@ -300,104 +301,40 @@ class MozMill(object):
         self.results.alltests.append(test)
         self.results.fails.append(test)
 
-    def stop_runner(self, timeout=30, close_bridge=False, hard=False):
+    def stop_runner(self, timeout=30):
+
         sleep(1)
+
+        # quit the application via JS
+        # this *will* cause a diconnect error
+        # (not sure what the socket.error is all about)
         try:
             mozmill = jsbridge.JSObject(self.bridge, mozmillModuleJs)
             mozmill.cleanQuit()
         except (socket.error, JSBridgeDisconnectError):
             pass
 
-        if not close_bridge:
-            starttime = datetime.utcnow()
-            self.runner.wait(timeout=timeout)
-            endtime = datetime.utcnow()
-            if ( endtime - starttime ) > timedelta(seconds=timeout):
-                try:
-                    self.runner.stop()
-                except:
-                    pass
-                self.runner.wait()
-        else: # TODO: unify this logic with the above better
-            if hard:
-                self.runner.cleanup()
-                return
-
-            # XXX this call won't actually finish in the specified timeout time
-            self.runner.wait(timeout=timeout)
-
-            self.back_channel.close()
-            self.bridge.close()
-            x = 0
-            while x < timeout:
-                if self.endRunnerCalled:
-                    break
-                sleep(1)
-                x += 1
-            else:
-                print "WARNING | endRunner was never called. There must have been a failure in the framework."
-                self.runner.cleanup()
-                sys.exit(1)
+        # wait for the runner to stop
+        starttime = datetime.utcnow()
+        self.runner.wait(timeout=timeout)
+        endtime = datetime.utcnow()
+        if ( endtime - starttime ) > timedelta(seconds=timeout):
+            try:
+                self.runner.stop()
+            except:
+                # XXX Not sure why we bare except here :/
+                pass
 
     def stop(self, fatal=False):
         """cleanup and invoking of final handlers"""
 
+        # close the bridge and back channel
+        self.back_channel.close()
+        self.bridge.close()
+
         # cleanup 
         if self.runner is not None:
             self.runner.cleanup()
-
-
-class MozMillRestart(MozMill):
-    
-
-    def run_dir(self, test_dir, sleeptime=0):
-        """run a directory of restart tests resetting the profile per directory"""
-
-        for test in tests:
-            frame = self.start_runner()
-            self.currentShutdownMode = self.shutdownModes.default
-            self.endRunnerCalled = False
-            sleep(sleeptime)
-
-            frame.persisted = self.persisted
-            try:
-                frame.runTestFile(test)
-                while not self.endRunnerCalled:
-                    # XXX could cause infinite loop
-                    sleep(.25)
-                self.currentShutdownMode = self.shutdownModes.default
-                self.stop_runner()
-                sleep(2) # Give mozrunner some time to shutdown the browser
-            except JSBridgeDisconnectError:
-                if not self.userShutdownEnabled:
-                    raise JSBridgeDisconnectError()
-            self.userShutdownEnabled = False
-        
-        # Reset the runner + profile.
-        self.runner.reset()
-    
-    def run_tests(self, tests, sleeptime=0):
-
-        for test_dir in tests:
-
-            # XXX this allows for only one sub-level of test directories
-            # is this a spec or a side-effect?
-            # If the former, it should be documented
-            test_dirs = [d for d in os.listdir(os.path.abspath(os.path.expanduser(test_dir))) 
-                         if d.startswith('test') and os.path.isdir(os.path.join(test_dir, d))]
-
-            if not test_dirs:
-                test_dirs = [test_dir]
-
-            for d in test_dirs:
-                d = os.path.abspath(os.path.join(test_dir, d))
-                self.run_dir(d, sleeptime)
-
-        # cleanup the profile
-        self.runner.cleanup()
-
-        # Give a second for any pending callbacks to finish
-        sleep(1) 
 
 
 ### methods for test collection
@@ -538,28 +475,6 @@ class CLI(mozrunner.CLI):
         if '-foreground' not in cmdargs:
             cmdargs.append('-foreground')
         return cmdargs
-
-    def run_tests(self, mozmill_cls, tests, runner, results):
-        """
-        instantiate a mozmill object and run its tests
-        - mozmill_cls : class of Mozmill to instantiate (either MozMill or MozMillRestart)
-        - tests : test paths to run
-        - runner : instance of a MozRunner
-        """
-
-        # create a mozmill
-        mozmill = mozmill_cls(results,
-                              jsbridge_port=self.options.port,
-                              jsbridge_timeout=self.options.timeout,
-                              handlers=self.event_handlers
-                              )
-
-        # start your mozmill
-        mozmill.start(runner=runner)
-
-        # run the tests
-        mozmill.run(tests)
-
         
     def run(self):
 
