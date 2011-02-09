@@ -261,9 +261,6 @@ class MozMill(object):
                 self.report_disconnect()
                 raise
             
-        # shutdown the test harness
-#        self.stop(fatal=disconnected)
-
         if disconnected:
             # raise the disconnect error
             raise
@@ -514,7 +511,8 @@ class CLI(mozrunner.CLI):
         except:
             exception_type, exception, tb = sys.exc_info()
 
-        mozmill.stop() # cleanly shutdown
+        # shutdown the test harness cleanly
+        mozmill.stop()
 
         # do whatever reporting you're going to do
         results.stop(self.event_handlers)
