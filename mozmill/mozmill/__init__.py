@@ -113,13 +113,16 @@ class MozMill(object):
     m.stop()
     """
 
-    def __init__(self, results, jsbridge_port=24242, jsbridge_timeout=60, handlers=()):
+    def __init__(self, runner, results, jsbridge_port=24242, jsbridge_timeout=60, handlers=()):
         """
         - results : a TestResults instance to accumulate results
         - jsbridge_port : port jsbridge uses to connect to to the application
         - jsbridge_timeout : how long to go without jsbridge communication
         - handlers : pluggable event handler
         """
+
+        # the MozRunner
+        self.runner = runner
 
         # mozmill puts your data here
         self.results = results 
@@ -196,10 +199,6 @@ class MozMill(object):
             self.back_channel.add_listener(listener[0], **listener[1])
         for global_listener in self.global_listeners:
             self.back_channel.add_global_listener(global_listener)
-
-    def start(self, runner):
-        """prepare to run the tests"""        
-        self.runner = runner
 
     def start_runner(self):
         """start the MozRunner"""
@@ -501,12 +500,11 @@ class CLI(mozrunner.CLI):
         runner = self.create_runner()
 
         # create a MozMill
-        mozmill = MozMill(results,
+        mozmill = MozMill(runner, results,
                           jsbridge_port=self.options.port,
                           jsbridge_timeout=self.options.timeout,
                           handlers=self.event_handlers
                           )
-        mozmill.start(runner=runner)
 
         # run the tests
         exception = None # runtime exception
