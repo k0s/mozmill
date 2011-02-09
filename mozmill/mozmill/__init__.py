@@ -324,7 +324,7 @@ class MozMill(object):
                 # XXX Not sure why we bare except here :/
                 pass
 
-    def stop(self, fatal=False):
+    def stop(self):
         """cleanup and invoking of final handlers"""
 
         # close the bridge and back channel
@@ -513,7 +513,8 @@ class CLI(mozrunner.CLI):
                 mozmill.run(test_group)
         except:
             exception_type, exception, tb = sys.exc_info()
-            runner.cleanup() # cleanly shutdown
+
+        mozmill.stop() # cleanly shutdown
 
         # do whatever reporting you're going to do
         results.stop(self.event_handlers)
