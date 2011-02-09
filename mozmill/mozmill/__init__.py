@@ -127,6 +127,9 @@ class MozMill(object):
         # mozmill puts your data here
         self.results = results 
 
+        # queue of tests
+        self.test_queue = []
+
         # jsbridge parameters
         self.jsbridge_port = jsbridge_port
         self.jsbridge_timeout = jsbridge_timeout
@@ -228,20 +231,24 @@ class MozMill(object):
         # return the frame
         return frame
 
-
-    def run_tests(self, tests):
+    def run_tests(self):
         """run test files"""
+
+        if not self.test_queue:
+            return # nothing to do
 
         # start the runner
         frame = self.start_runner()
         
         # run tests
-        for test in tests:
-          frame.runTestFile(test['path'])
-          while not self.endRunnerCalled:
-              # XXX could cause infinite loop
-              sleep(.25)
-          self.currentShutdownMode = self.shutdownModes.default
+        while self.test_queue:
+            test = self.test_queue.pop(0)
+            frame.runTestFile(test['path'])
+            self.currentShutdownMode = self.shutdownModes.default
+            
+        while not self.endRunnerCalled:
+            # XXX could cause infinite loop
+            sleep(.25)
 
         # Give a second for any callbacks to finish.
         sleep(1)
@@ -252,9 +259,11 @@ class MozMill(object):
     def run(self, tests):
         """run the tests"""
 
+        self.test_queue.extend(tests)
+
         disconnected = False
         try:
-            self.run_tests(tests)
+            self.run_tests()
         except JSBridgeDisconnectError:
             disconnected = True
             if not self.userShutdownEnabled:
