@@ -325,7 +325,7 @@ class MozMill(object):
             self.runner.cleanup()
 
 
-### methods for test collection
+### method for test collection
 
 def collect_tests(path):
     """find all tests for a given path"""
@@ -344,32 +344,6 @@ def collect_tests(path):
                 files.append(full)
     return files
 
-def collect_restart_tests(path):
-    """find all restart tests for a given path"""
-    # XXX this method is a bit wonky and magical as
-    # far as what it actually does.  just sayin
-
-    path = os.path.abspath(path)
-    assert os.path.isdir(path)
-    
-    test_dirs = [os.path.join(path, d) for d in sorted(os.listdir(path))
-                 if d.startswith('test')
-                 and os.path.isdir(os.path.join(path, d))]
-
-    # if you find subdirectories, recurse into them
-    # otherwise, just take tests from this directory
-    # its magic!
-    files = []
-    if test_dirs:
-        for test_dir in test_dirs:
-            files += collect_restart_tests(test_dir)
-    else:
-        counter = 1
-        while os.path.isfile(os.path.join(path, 'test%d.js' % counter)):
-             files.append(os.path.join(path, 'test%d.js' % counter))
-             counter += 1
-
-    return files
         
 ### command line interface
 
@@ -400,15 +374,18 @@ class CLI(mozrunner.CLI):
                 raise Exception("Not a valid test file/directory: %s" % test)
 
             # collect the tests
+            tests = [{'test': os.path.basename(t), 'path': t}
+                     for t in collect_tests(test)])
             if self.options.restart:
-                self.manifest.tests.extend([{'test': os.path.basename(t),
-                                             'path': t,
-                                             'type': 'restart'}
-                                            for t in collect_restart_tests(test)])
-            else:
-                self.manifest.tests.extend([{'test': os.path.basename(t),
-                                             'path': t}
-                                            for t in collect_tests(test)])
+                for t in tests:
+                    t['type'] = 'restart'
+            self.manifest.tests.extend(tests)
+
+        # list the tests and exit if specified
+        if self.options.list_tests:
+            for test in self.manifest.tests:
+                print test['path']
+            self.parser.exit()
 
     def add_options(self, parser):
         mozrunner.CLI.add_options(self, parser)
@@ -431,6 +408,9 @@ class CLI(mozrunner.CLI):
         parser.add_option('-P', '--port', dest="port", type="int",
                           default=24242,
                           help="TCP port to run jsbridge on.")
+        parser.add_option('--list-tests', dest='list_tests',
+                          action='store_true', default=False,
+                          help="list test files that would be run, in order")
 
         for cls in handlers.handlers():
             if hasattr(cls, 'add_options'):
