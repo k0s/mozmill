@@ -57,10 +57,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 extension_path = os.path.join(basedir, 'extension')
 mozmillModuleJs = "Components.utils.import('resource://mozmill/modules/mozmill.js')"
 
-class TestsFailedException(Exception):
-    """exception to be raised when the tests fail"""
-    # XXX unused
-
 class TestResults(object):
     """
     accumulate test results for Mozmill
@@ -74,9 +70,11 @@ class TestResults(object):
         self.alltests = []
 
         # total test run time
-        # TODO: these endpoints are a bit vague as to where they live
         self.starttime = datetime.now()
         self.endtime = None
+
+        # application information
+        self.appinfo = None
 
     def events(self):
         """events the MozMill class will dispatch to"""
@@ -191,7 +189,6 @@ class MozMill(object):
                                                                           self.jsbridge_port)
 
         # set a timeout on jsbridge actions in order to ensure termination
-        # XXX bad touch
         self.back_channel.timeout = self.bridge.timeout = self.jsbridge_timeout
         
         # Assign listeners to the back channel
@@ -211,12 +208,8 @@ class MozMill(object):
         self.create_network()
 
         # fetch the application info
-        # XXX we do this per start_runner, but really it should either
-        # be done once or stored separately per start_runner instance
-        # its better, hypothetically, to store per runner, as if the
-        # appinfo changes (e.g. on upgrade) you could discriminate
-        # vs that
-        self.results.appinfo = self.get_appinfo(self.bridge)
+        if not self.results.appinfo:
+            self.results.appinfo = self.get_appinfo(self.bridge)
 
         frame = jsbridge.JSObject(self.bridge,
                                   "Components.utils.import('resource://mozmill/modules/frame.js')")
@@ -227,7 +220,6 @@ class MozMill(object):
 
         # return the frame
         return frame
-
 
     def run_tests(self, tests):
         """run test files"""
