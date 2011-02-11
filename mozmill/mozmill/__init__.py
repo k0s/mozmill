@@ -215,8 +215,9 @@ class MozMill(object):
                                   "Components.utils.import('resource://mozmill/modules/frame.js')")
 
         # set some state
-        self.endRunnerCalled = False # transfer persisted data
-        frame.persisted = self.persisted
+        self.currentShutdownMode = self.shutdownModes.default
+        self.endRunnerCalled = False 
+        frame.persisted = self.persisted # transfer persisted data
 
         # return the frame
         return frame
@@ -230,13 +231,6 @@ class MozMill(object):
         # run tests
         for test in tests:
           frame.runTestFile(test['path'])
-          while not self.endRunnerCalled:
-              # XXX could cause infinite loop
-              sleep(.25)
-          self.currentShutdownMode = self.shutdownModes.default
-
-        # Give a second for any callbacks to finish.
-        sleep(1)
 
         # stop the runner
         self.stop_runner()
@@ -289,9 +283,13 @@ class MozMill(object):
         self.results.alltests.append(test)
         self.results.fails.append(test)
 
-    def stop_runner(self, timeout=30):
+    def stop_runner(self, timeout=10):
 
+        # Give a second for any callbacks to finish.
         sleep(1)
+
+        # reset the shutdown mode
+        self.currentShutdownMode = self.shutdownModes.default
 
         # quit the application via JS
         # this *will* cause a diconnect error
@@ -303,15 +301,15 @@ class MozMill(object):
             pass
 
         # wait for the runner to stop
-        starttime = datetime.utcnow()
         self.runner.wait(timeout=timeout)
-        endtime = datetime.utcnow()
-        if ( endtime - starttime ) > timedelta(seconds=timeout):
-            try:
-                self.runner.stop()
-            except:
-                # XXX Not sure why we bare except here :/
-                pass
+        x = 0
+        while x < timeout:
+            if self.endRunnerCalled:
+                break
+            x += 0.25
+            sleep(0.25)
+        else:
+            raise Exception('endRunner was never called. There must have been a failure in the framework')
 
     def stop(self):
         """cleanup and invoking of final handlers"""
@@ -375,7 +373,7 @@ class CLI(mozrunner.CLI):
 
             # collect the tests
             tests = [{'test': os.path.basename(t), 'path': t}
-                     for t in collect_tests(test)])
+                     for t in collect_tests(test)]
             if self.options.restart:
                 for t in tests:
                     t['type'] = 'restart'
