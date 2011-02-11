@@ -279,7 +279,6 @@ class MozMill(object):
         test['failed'] = 1
 
         # send to self.results
-        # XXX bad touch
         self.results.alltests.append(test)
         self.results.fails.append(test)
 
