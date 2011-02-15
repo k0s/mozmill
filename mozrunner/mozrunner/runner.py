@@ -194,7 +194,7 @@ class Runner(object):
     def wait(self, timeout=None):
         """Wait for the app to exit."""
         if self.process_handler is None:
-            return        
+            return
         self.process_handler.wait(timeout=timeout)
 
     def stop(self):
