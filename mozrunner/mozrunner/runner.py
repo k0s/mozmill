@@ -180,6 +180,15 @@ class Runner(object):
 
     def start(self):
         """Run self.command in the proper environment."""
+
+        # run once to register any extensions
+        # see:
+        # - http://hg.mozilla.org/releases/mozilla-1.9.2/file/915a35e15cde/build/automation.py.in#l702
+        # - http://mozilla-xp.com/mozilla.dev.apps.firefox/Rules-for-when-firefox-bin-restarts-it-s-process
+        firstrun = killableprocess.runCommand(self.command+['-silent', '-foreground'], env=self.env, **self.kp_kwargs)
+        firstrun.wait()
+
+        # now run for real
         self.process_handler = killableprocess.runCommand(self.command+self.cmdargs, env=self.env, **self.kp_kwargs)
 
     def wait(self, timeout=None):
