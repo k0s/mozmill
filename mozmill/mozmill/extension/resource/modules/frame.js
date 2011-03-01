@@ -301,28 +301,28 @@ if (jsbridge) {
   events.addListener('', function (name, obj) {jsbridge.fireEvent('mozmill.'+name, obj)} );
 }
 
-var http_server = httpd.getServer(43336);
 
 function Collector () {
+  // the collector handles HTTPD and initilizing the module
   this.test_modules_by_filename = {};
   this.testing = [];
   this.httpd_started = false;
   this.http_port = 43336;
+  this.http_server = httpd.getServer(this.http_port);
 }
 
 Collector.prototype.startHttpd = function () {
   while (this.httpd == undefined) {
     try {
-      http_server.start(this.http_port);
+      this.http_server.start(this.http_port);
       this.httpd = http_server;
     } catch(e) { // Failure most likely due to port conflict
       this.http_port++;
-      http_server = httpd.getServer(this.http_port);
+      this.http_server = httpd.getServer(this.http_port);
     }; 
-    
-    
   }
 }
+
 Collector.prototype.stopHttpd = function () {
   if (this.httpd) {
     this.httpd.stop(function(){});  // Callback needed to pause execution until the server has been properly shutdown
