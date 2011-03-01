@@ -45,8 +45,7 @@ var strings = {}; Components.utils.import('resource://mozmill/stdlib/strings.js'
 var arrays = {};  Components.utils.import('resource://mozmill/stdlib/arrays.js', arrays);
 var withs = {};   Components.utils.import('resource://mozmill/stdlib/withs.js', withs);
 var utils = {};   Components.utils.import('resource://mozmill/modules/utils.js', utils);
-var securableModule = {};
-  Components.utils.import('resource://mozmill/stdlib/securable-module.js', securableModule);
+var securableModule = {};  Components.utils.import('resource://mozmill/stdlib/securable-module.js', securableModule);
 
 var aConsoleService = Components.classes["@mozilla.org/consoleservice;1"].
      getService(Components.interfaces.nsIConsoleService);
@@ -57,8 +56,6 @@ var loader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
 var uuidgen = Components.classes["@mozilla.org/uuid-generator;1"]
                     .getService(Components.interfaces.nsIUUIDGenerator);  
 
-var backstage = this;
-
 var persisted = {};
 
 arrayRemove = function(array, from, to) {
@@ -68,8 +65,8 @@ arrayRemove = function(array, from, to) {
 };
 
 mozmill = undefined; elementslib = undefined;
-
 var loadTestResources = function () {
+  // load resources we want in our tests
   if (mozmill == undefined) {
     mozmill = {};
     Components.utils.import("resource://mozmill/modules/mozmill.js", mozmill);
@@ -81,11 +78,14 @@ var loadTestResources = function () {
 }
 
 var loadFile = function(path, collector) {
+  // load a test module from a file and add some candy
+
   var file = Components.classes["@mozilla.org/file/local;1"]
                        .createInstance(Components.interfaces.nsILocalFile);
   file.initWithPath(path);
   var uri = ios.newFileURI(file).spec;
 
+  // populate the module with some things we like
   var module = {};  
   module.collector = collector
   loadTestResources();
@@ -96,7 +96,6 @@ var loadFile = function(path, collector) {
   module.Ci = Components.interfaces;
   module.Cu = Components.utils;
   module.log = log;
-
   module.require = function (mod) {
     var loader = new securableModule.Loader({
       rootPaths: [ios.newFileURI(file.parent).spec],
@@ -306,12 +305,9 @@ var http_server = httpd.getServer(43336);
 
 function Collector () {
   this.test_modules_by_filename = {};
-  this.loaded_directories = [];
   this.testing = [];
   this.httpd_started = false;
   this.http_port = 43336;
-  // var logging = {}; Components.utils.import('resource://mozmill/stdlib/logging.js', logging);
-  // this.logger = new logging.Logger('Collector');
 }
 
 Collector.prototype.startHttpd = function () {
@@ -415,8 +411,6 @@ function Runner (collector, invokedFromIDE) {
   this.collector = collector;
   this.invokedFromIDE = invokedFromIDE
   events.fireEvent('startRunner', true);
-  // var logging = {}; Components.utils.import('resource://mozmill/stdlib/logging.js', logging);
-  // this.logger = new logging.Logger('Runner');
   var m = {}; Components.utils.import('resource://mozmill/modules/mozmill.js', m);
   this.platform = m.platform;
 }
