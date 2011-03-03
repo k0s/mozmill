@@ -170,6 +170,9 @@ class MozMill(object):
         self.persisted = obj
 
     def startTest_listener(self, test):
+#        f = file('tests.txt', 'a')
+#        print >> f, test
+#        f.close()
         self.current_test = test
 
     def endRunner_listener(self, obj):
