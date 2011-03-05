@@ -315,7 +315,7 @@ Collector.prototype.startHttpd = function () {
   while (this.httpd == undefined) {
     try {
       this.http_server.start(this.http_port);
-      this.httpd = http_server;
+      this.httpd = this.http_server;
     } catch(e) { // Failure most likely due to port conflict
       this.http_port++;
       this.http_server = httpd.getServer(this.http_port);
