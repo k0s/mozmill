@@ -133,9 +133,11 @@ class MozMill(object):
         self.persisted = {}
 
         # shutdown parameters
-        self.shutdownModes = enum('default', 'user_shutdown', 'user_restart')
-        self.currentShutdownMode = self.shutdownModes.default
-        self.userShutdownEnabled = False
+#        self.shutdownModes = enum('default',
+#                                  'user_shutdown',
+#                                  'user_restart',
+#                                  'runner_shutdown',
+#                                  'runner_restart')
         self.endRunnerCalled = False
 
         # setup event listeners
@@ -170,17 +172,28 @@ class MozMill(object):
         self.persisted = obj
 
     def startTest_listener(self, test):
-#        f = file('tests.txt', 'a')
-#        print >> f, test
-#        f.close()
         self.current_test = test
 
     def endRunner_listener(self, obj):
         self.endRunnerCalled = True
         
     def userShutdown_listener(self, obj):
-        if obj in [self.shutdownModes.default, self.shutdownModes.user_restart, self.shutdownModes.user_shutdown]:
-            self.currentShutdownMode = obj
+        """
+        listen for the 'userShutdown' event and set some state so
+        that the (python) instance knows what to do.  The obj should
+        have the following keys:
+        - type : shutdown type; should be one of:
+                 * default : normal shutdown mode (do nothing)
+                 * user_shutdown : the user has shutdown the browser
+                 * user_restart : the user has restart the browser
+                 * runner_shutdown: shut down via mozrunner
+                 * restart : restart via mozrunner
+        - name : for the restart cases, which test to run next
+        - resetProfile : reset the profile after shutdown
+        """
+        
+#        if obj in [self.shutdownModes.default, self.shutdownModes.user_restart, self.shutdownModes.user_shutdown]:
+        self.currentShutdownMode = obj 
         self.userShutdownEnabled = not self.userShutdownEnabled        
 
     ### methods for startup
@@ -218,8 +231,9 @@ class MozMill(object):
                                   "Components.utils.import('resource://mozmill/modules/frame.js')")
 
         # set some state
-        self.currentShutdownMode = self.shutdownModes.default
-        self.endRunnerCalled = False 
+#        self.currentShutdownMode = self.shutdownModes.default
+        self.currentShutdownMode = {'type': 'default'}
+        self.endRunnerCalled = False  
         frame.persisted = self.persisted # transfer persisted data
 
         # return the frame
@@ -246,7 +260,7 @@ class MozMill(object):
             self.run_tests(tests)
         except JSBridgeDisconnectError:
             disconnected = True
-            if not self.userShutdownEnabled:
+            if not self.currentShutdownMode['type'] in ('user_shutdown', 'user_restart'):
                 self.report_disconnect()
                 raise
             
@@ -291,7 +305,7 @@ class MozMill(object):
         sleep(1)
 
         # reset the shutdown mode
-        self.currentShutdownMode = self.shutdownModes.default
+        self.currentShutdownMode = {'type': 'default'}
 
         # quit the application via JS
         # this *will* cause a diconnect error
@@ -498,12 +512,6 @@ class CLI(mozrunner.CLI):
         # return results on success [currently unused]
         return results
         
-
-def enum(*sequential, **named):
-    # XXX to deprecate
-    enums = dict(zip(sequential, range(len(sequential))), **named)
-    return type('Enum', (), enums)
-
 def cli(args=sys.argv[1:]):
     CLI(args).run()
 

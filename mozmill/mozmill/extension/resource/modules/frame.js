@@ -427,12 +427,15 @@ Runner.prototype.wrapper = function (func, arg) {
                      .getService(Components.interfaces.nsIThreadManager)
                      .currentThread;
 
+  // skip excluded platforms
   if (func.EXCLUDED_PLATFORMS != undefined) {
     if (arrays.inArray(func.EXCLUDED_PLATFORMS, this.platform)) {
       events.skip("Platform exclusion");
       return;
     }
   }
+
+  // skip function if requested
   if (func.__force_skip__ != undefined) {
     events.skip(func.__force_skip__);
     return;
