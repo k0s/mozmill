@@ -440,19 +440,23 @@ Runner.prototype.wrapper = function (func, arg) {
     events.skip(func.__force_skip__);
     return;
   }
+
+  // execute the test function
   try {
     if (arg) {
       func(arg);
     } else {  
         func();
     }
-    // If a shutdown was expected but the application hasn't quit, throw a failure
+
+    // If a user shutdown was expected but the application hasn't quit, throw a failure
     if (events.isUserShutdown()) {
       utils.sleep(500);  // Prevents race condition between mozrunner hard process kill and normal FFx shutdown
       if (!events.appQuit) {
         events.fail({'function':'Runner.wrapper', 'message':'Shutdown expected but none detected before end of test'});
       }
     }
+
   } catch (e) {
     // Allow the exception if a user shutdown was expected
     if (!events.isUserShutdown()) {

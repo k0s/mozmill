@@ -704,7 +704,7 @@ MozMillController.prototype.waitThenClick = function (elem, timeout, interval) {
 }
 
 MozMillController.prototype.fireEvent = function (name, obj) {
-    if (name == "userShutdown") {
+    if (name == "userShutdown" && obj['user']) {
     frame.events.toggleUserShutdown();
   }
   frame.events.fireEvent(name, obj);
@@ -721,7 +721,9 @@ MozMillController.prototype.restartApplication = function (next, resetProfile)
   // restart the application via the python runner
   // - next : name of the next test function to run after restart
   // - resetProfile : whether to reset the profile after restart
-  this.fireEvent('userShutdown', {'type': 'runner_restart', 
+  this.fireEvent('userShutdown', {'user': false,
+                                  'restart': true,
+                                  'next': next,
                                   'resetProfile': Boolean(resetProfile)});
 }
 
