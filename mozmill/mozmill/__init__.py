@@ -179,8 +179,10 @@ class MozMill(object):
         user = self.shutdownMode.get('user', False)
         restart = self.shutdownMode.get('restart', False)
         if not (user and restart):
+            print 'foo'
             self.stop_runner()
-        #frame = self.start_runner()        
+            print 'bar'
+        #frame = self.start_runner()
 
     def endRunner_listener(self, obj):
         self.endRunnerCalled = True
@@ -311,6 +313,8 @@ class MozMill(object):
         # reset the shutdown mode
         self.shutdownMode = {}
 
+        print 1
+
         # quit the application via JS
         # this *will* cause a diconnect error
         # (not sure what the socket.error is all about)
@@ -319,6 +323,8 @@ class MozMill(object):
             mozmill.cleanQuit()
         except (socket.error, JSBridgeDisconnectError):
             pass
+
+        print 2
 
         # wait for the runner to stop
         self.runner.wait(timeout=timeout)
@@ -330,6 +336,8 @@ class MozMill(object):
             sleep(0.25)
         else:
             raise Exception('endRunner was never called. There must have been a failure in the framework')
+
+        print 3
 
     def stop(self):
         """cleanup and invoking of final handlers"""
