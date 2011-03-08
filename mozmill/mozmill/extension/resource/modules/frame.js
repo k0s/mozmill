@@ -348,7 +348,7 @@ Collector.prototype.addHttpResource = function (directory, ns) {
   return 'http://localhost:' + this.http_port + ns
 }
 
-Collector.prototype.initTestModule = function (filename) {
+    Collector.prototype.initTestModule = function (filename, name) {
   var test_module = loadFile(filename, this);
   test_module.__tests__ = [];
   for (var i in test_module) {
@@ -366,6 +366,10 @@ Collector.prototype.initTestModule = function (filename) {
         test_module[i].__name__ = i;
         test_module.__teardownModule__ = test_module[i];
       } else if (withs.startsWith(i, "test")) {
+        if (name && (i != name) {
+                continue;
+            }
+        name = null;
         test_module[i].__name__ = i;
         test_module.__tests__.push(test_module[i]);
       }
@@ -408,7 +412,7 @@ function Runner (collector, invokedFromIDE) {
   this.platform = m.platform;
 }
 
-Runner.prototype.runTestFile = function (filename) {
+Runner.prototype.runTestFile = function (filename, name) {
   this.collector.initTestModule(filename);
   this.runTestModule(this.collector.test_modules_by_filename[filename]);
 }
@@ -532,9 +536,9 @@ Runner.prototype.runTestModule = function (module) {
   module.__status__ = 'done';
 }
 
-var runTestFile = function (filename, invokedFromIDE) {
+var runTestFile = function (filename, invokedFromIDE, name) {
   var runner = new Runner(new Collector(), invokedFromIDE);
-  runner.runTestFile(filename);
+  runner.runTestFile(filename, name);
   runner.end();
   return true;
 }

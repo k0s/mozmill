@@ -143,6 +143,7 @@ class MozMill(object):
         self.add_listener(self.persist_listener, eventType="mozmill.persist")
         self.add_listener(self.endRunner_listener, eventType='mozmill.endRunner')
         self.add_listener(self.startTest_listener, eventType='mozmill.setTest')
+        self.add_listener(self.endTest_listener, eventType='mozmill.endTest')
         self.add_listener(self.userShutdown_listener, eventType='mozmill.userShutdown')
 
         # add listeners for event handlers
@@ -170,6 +171,16 @@ class MozMill(object):
 
     def startTest_listener(self, test):
         self.current_test = test
+
+    def endTest_listener(self, test):
+        """respond to test restarts"""
+        if not self.shutdownMode:
+            return # default: do not shutdown
+        user = self.shutdownMode.get('user', False)
+        restart = self.shutdownMode.get('restart', False)
+        if not (user and restart):
+            self.stop_runner()
+        #frame = self.start_runner()        
 
     def endRunner_listener(self, obj):
         self.endRunnerCalled = True
@@ -229,8 +240,8 @@ class MozMill(object):
         # return the frame
         return frame
 
-    def run_test_file(self, path):
-        pass
+    def run_test_file(self, frame, path, name=None):
+        frame.runTestFile(path, False, name)
 
     def run_tests(self, tests):
         """run test files"""
@@ -240,7 +251,7 @@ class MozMill(object):
         
         # run tests
         for test in tests:
-          frame.runTestFile(test['path'])
+            self.run_test_file(frame, test['path'])
 
         # stop the runner
         self.stop_runner()
@@ -253,7 +264,7 @@ class MozMill(object):
             self.run_tests(tests)
         except JSBridgeDisconnectError:
             disconnected = True
-            if not self.shutdowMode.get('user', False):
+            if not self.shutdownMode.get('user', False):
                 self.report_disconnect()
                 raise
             
