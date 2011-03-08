@@ -348,7 +348,7 @@ Collector.prototype.addHttpResource = function (directory, ns) {
   return 'http://localhost:' + this.http_port + ns
 }
 
-    Collector.prototype.initTestModule = function (filename, name) {
+Collector.prototype.initTestModule = function (filename, name) {
   var test_module = loadFile(filename, this);
   test_module.__tests__ = [];
   for (var i in test_module) {
@@ -366,7 +366,7 @@ Collector.prototype.addHttpResource = function (directory, ns) {
         test_module[i].__name__ = i;
         test_module.__teardownModule__ = test_module[i];
       } else if (withs.startsWith(i, "test")) {
-        if (name && (i != name) {
+          if (name && (i != name)) {
                 continue;
             }
         name = null;
@@ -413,7 +413,7 @@ function Runner (collector, invokedFromIDE) {
 }
 
 Runner.prototype.runTestFile = function (filename, name) {
-  this.collector.initTestModule(filename);
+  this.collector.initTestModule(filename, name);
   this.runTestModule(this.collector.test_modules_by_filename[filename]);
 }
 Runner.prototype.end = function () {
