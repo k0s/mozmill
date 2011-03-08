@@ -178,6 +178,7 @@ class MozMill(object):
             return # default: do not shutdown
         user = self.shutdownMode.get('user', False)
         restart = self.shutdownMode.get('restart', False)
+        self.endRunnerCalled = True
         if not (user and restart):
             print 'foo'
             self.stop_runner()

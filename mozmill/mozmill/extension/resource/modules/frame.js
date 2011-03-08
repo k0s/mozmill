@@ -471,10 +471,6 @@ Runner.prototype.wrapper = function (func, arg) {
 }
 
 Runner.prototype.runTestModule = function (module) {
-  var attrs = [];
-  for (var i in module) {
-    attrs.push(i);
-  }
   events.setModule(module);
   module.__status__ = 'running';
   if (module.__setupModule__) { 
