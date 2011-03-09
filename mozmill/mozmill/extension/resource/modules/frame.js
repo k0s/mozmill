@@ -353,24 +353,20 @@ Collector.prototype.initTestModule = function (filename, name) {
   test_module.__tests__ = [];
   for (var i in test_module) {
     if (typeof(test_module[i]) == "function") {
+      test_module[i].__name__ = i;
       if (i == "setupTest") {
-        test_module[i].__name__ = i;
         test_module.__setupTest__ = test_module[i];
       } else if (i == "setupModule") {
-        test_module[i].__name__ = i;
         test_module.__setupModule__ = test_module[i];
       } else if (i == "teardownTest") {
-        test_module[i].__name__ = i;
         test_module.__teardownTest__ = test_module[i];
       } else if (i == "teardownModule") {
-        test_module[i].__name__ = i;
         test_module.__teardownModule__ = test_module[i];
       } else if (withs.startsWith(i, "test")) {
           if (name && (i != name)) {
                 continue;
             }
         name = null;
-        test_module[i].__name__ = i;
         test_module.__tests__.push(test_module[i]);
       }
     }
@@ -379,7 +375,6 @@ Collector.prototype.initTestModule = function (filename, name) {
   test_module.collector = this;
   test_module.status = 'loaded';
   this.test_modules_by_filename[filename] = test_module;
-
   return test_module;
 }
 
