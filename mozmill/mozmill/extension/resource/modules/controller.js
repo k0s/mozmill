@@ -1311,4 +1311,3 @@ controllerAdditions = {
   'navigator:browser'  :browserAdditions,
 }
 
-var withs = {}; Components.utils.import('resource://mozmill/stdlib/withs.js', withs);
