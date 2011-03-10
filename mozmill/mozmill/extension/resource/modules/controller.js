@@ -710,9 +710,16 @@ MozMillController.prototype.fireEvent = function (name, obj) {
   frame.events.fireEvent(name, obj);
 }
 
-MozMillController.prototype.startUserShutdown = function (timeout, restart) {
-  // 0 = default shutdown, 1 = user shutdown, 2 = user restart
-  this.fireEvent('userShutdown', restart ? 2 : 1);
+MozMillController.prototype.startUserShutdown = function (timeout, restart, next, resetProfile) {
+
+  if (restart && resetProfile) {
+      throw new Error("You can't have a user-restart and reset the profile; there is a race condition");
+  }
+
+  this.fireEvent('userShutdown', {'user': true,
+                                  'restart': Boolean(restart),
+                                  'next': next,
+                                  'resetProfile': Boolean(resetProfile)});
   this.window.setTimeout(this.fireEvent, timeout, 'userShutdown', 0);
 }
 
@@ -726,8 +733,6 @@ MozMillController.prototype.restartApplication = function (next, resetProfile)
                                   'next': next,
                                   'resetProfile': Boolean(resetProfile)});
   utils.getMethodInWindows('goQuitApplication')();
-  throw('something');
-
 }
 
 MozMillController.prototype.stopApplication = function (resetProfile) 
