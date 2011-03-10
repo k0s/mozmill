@@ -181,7 +181,7 @@ class MozMill(object):
         self.endRunnerCalled = True
         if not (user and restart):
             print 'foo'
-            self.stop_runner()
+#            self.stop_runner()
             print 'bar'
         #frame = self.start_runner()
 
@@ -262,19 +262,13 @@ class MozMill(object):
     def run(self, tests):
         """run the tests"""
 
-        disconnected = False
         try:
             self.run_tests(tests)
         except JSBridgeDisconnectError:
-            disconnected = True
-            if not self.shutdownMode.get('user', False):
+            if not self.shutdownMode:
                 self.report_disconnect()
                 raise
             
-        if disconnected:
-            # raise the disconnect error
-            raise
-
     def get_appinfo(self, bridge):
         """ Collect application specific information """
         mozmill = jsbridge.JSObject(bridge, mozmillModuleJs)
