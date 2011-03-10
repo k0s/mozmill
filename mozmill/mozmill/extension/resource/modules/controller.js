@@ -726,7 +726,6 @@ MozMillController.prototype.restartApplication = function (next, resetProfile)
                                   'next': next,
                                   'resetProfile': Boolean(resetProfile)});
   utils.getMethodInWindows('goQuitApplication')();
-  sleep(5000);
 }
 
 MozMillController.prototype.stopApplication = function (resetProfile) 
