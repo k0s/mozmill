@@ -741,6 +741,7 @@ MozMillController.prototype.stopApplication = function (resetProfile)
   // - resetProfile : whether to reset the profile after shutdown
   this.fireEvent('userShutdown', {'type': 'runner_shutdown',
                                   'resetProfile': Boolean(resetProfile)});
+  utils.getMethodInWindows('goQuitApplication')();
 }
 
 /* Select the specified option and trigger the relevant events of the element.*/
