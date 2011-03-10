@@ -704,8 +704,8 @@ MozMillController.prototype.waitThenClick = function (elem, timeout, interval) {
 }
 
 MozMillController.prototype.fireEvent = function (name, obj) {
-    if (name == "userShutdown" && obj['user']) {
-    frame.events.toggleUserShutdown();
+    if (name == "userShutdown") {
+    frame.events.toggleUserShutdown(obj);
   }
   frame.events.fireEvent(name, obj);
 }
@@ -726,6 +726,8 @@ MozMillController.prototype.restartApplication = function (next, resetProfile)
                                   'next': next,
                                   'resetProfile': Boolean(resetProfile)});
   utils.getMethodInWindows('goQuitApplication')();
+  throw('something');
+
 }
 
 MozMillController.prototype.stopApplication = function (resetProfile) 

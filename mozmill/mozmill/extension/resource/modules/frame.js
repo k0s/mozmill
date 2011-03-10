@@ -172,14 +172,14 @@ events.setState = function (v) {
                            'setupTest', 'teardownTest', 'test', 'collection'], 
                            null, 'currentState', 'setState', v);
 }
-events.toggleUserShutdown = function (){
+events.toggleUserShutdown = function (obj){
   if (this.userShutdown) {
     this.fail({'function':'frame.events.toggleUserShutdown', 'message':'Shutdown expected but none detected before timeout'});
   }
-  this.userShutdown = (!this.userShutdown);
+  this.userShutdown = obj;
 }
 events.isUserShutdown = function () {
-  return this.userShutdown;
+    return Boolean(this.userShutdown);
 }
 events.setTest = function (test, invokedFromIDE) {
   test.__passes__ = [];
@@ -451,8 +451,8 @@ Runner.prototype.wrapper = function (func, arg) {
     // If a user shutdown was expected but the application hasn't quit, throw a failure
     if (events.isUserShutdown()) {
       utils.sleep(500);  // Prevents race condition between mozrunner hard process kill and normal FFx shutdown
-      if (!events.appQuit) {
-        events.fail({'function':'Runner.wrapper', 'message':'Shutdown expected but none detected before end of test'});
+      if (events.userShutdown['user'] && !events.appQuit) {
+          events.fail({'function':'Runner.wrapper', 'message':'Shutdown expected but none detected before end of test', 'userShutdown': events.userShutdown});
       }
     }
 
@@ -498,7 +498,11 @@ Runner.prototype.runTestModule = function (module) {
       events.setState('test'); 
       events.setTest(test, this.invokedFromIDE);
       if (setupTestPassed) {
-        this.wrapper(test);
+          this.wrapper(test);
+          if (events.userShutdown && !events.userShutdown['user']) {
+              events.endTest(test);
+              break;
+          }
       } else {
         events.skip("setupTest failed.");
       }
