@@ -242,11 +242,6 @@ class MozMill(object):
         try:
             frame.runTestFile(path, False, name)
         except JSBridgeDisconnectError:
-            for i in ('current_test', 'shutdownMode', 'endRunnerCalled'):
-                print i + ':'
-                print getattr(self, i)
-                print
-            import pdb; pdb.set_trace()
             # if the runner is restarted via JS, run this test
             # again if the next is specified
             if self.shutdownMode:
@@ -264,7 +259,8 @@ class MozMill(object):
         frame = self.start_runner()
         
         # run tests
-        for test in tests:
+        while tests:
+            test = tests.pop(0)
             self.run_test_file(frame, test['path'])
 
         # stop the runner
@@ -272,7 +268,6 @@ class MozMill(object):
 
     def run(self, tests):
         """run the tests"""
-
         try:
             self.run_tests(tests)
         except JSBridgeDisconnectError:
@@ -319,8 +314,6 @@ class MozMill(object):
         # reset the shutdown mode
         self.shutdownMode = {}
 
-        print 1
-
         # quit the application via JS
         # this *will* cause a diconnect error
         # (not sure what the socket.error is all about)
@@ -329,8 +322,6 @@ class MozMill(object):
             mozmill.cleanQuit()
         except (socket.error, JSBridgeDisconnectError):
             pass
-
-        print 2
 
         # wait for the runner to stop
         self.runner.wait(timeout=timeout)
@@ -343,7 +334,6 @@ class MozMill(object):
         else:
             raise Exception('endRunner was never called. There must have been a failure in the framework')
 
-        print 3
 
     def stop(self):
         """cleanup and invoking of final handlers"""
