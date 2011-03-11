@@ -174,7 +174,7 @@ events.setState = function (v) {
 }
 events.toggleUserShutdown = function (obj){
   if (this.userShutdown) {
-    this.fail({'function':'frame.events.toggleUserShutdown', 'message':'Shutdown expected but none detected before timeout'});
+      this.fail({'function':'frame.events.toggleUserShutdown', 'message':'Shutdown expected but none detected before timeout', 'obj': this.userShutdown});
   }
   this.userShutdown = obj;
 }
