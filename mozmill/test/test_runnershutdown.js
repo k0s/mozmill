@@ -7,7 +7,8 @@ var testRunnerRestart = function() {
 };
 
 var testUserRestart = function() {
-    //    controller.startUserShutdown(
+    controller.startUserShutdown(4000, true, 'testFinal');
+  controller.click(new elementslib.Elem(controller.menus["file-menu"].menu_FileQuitItem));
 };
 
 var testFinal = function() {
