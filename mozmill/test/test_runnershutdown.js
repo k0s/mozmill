@@ -1,11 +1,15 @@
 var setupModule = function(module) {
     module.controller = mozmill.getBrowserController();
-}
+};
 
-var testOne = function() {
-    controller.restartApplication('testTwo');
-}
+var testRunnerRestart = function() {
+    controller.restartApplication('testUserRestart');
+};
 
-var testTwo = function() {
+var testUserRestart = function() {
+    //    controller.startUserShutdown(
+};
 
-}
+var testFinal = function() {
+    controller.stopApplication();
+};
