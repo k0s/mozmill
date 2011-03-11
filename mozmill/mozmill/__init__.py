@@ -244,11 +244,10 @@ class MozMill(object):
         except JSBridgeDisconnectError:
             # if the runner is restarted via JS, run this test
             # again if the next is specified
-            if self.shutdownMode:
-                nextTest = self.shutdownMode.get('next')
-                if nextTest:
-                    frame = self.start_runner()
-                    self.run_test_file(frame, path, nextTest)
+            nextTest = self.shutdownMode.get('next')
+            if nextTest:
+                frame = self.start_runner()
+                self.run_test_file(frame, path, nextTest)
             else:
                 raise
 
@@ -261,7 +260,10 @@ class MozMill(object):
         # run tests
         while tests:
             test = tests.pop(0)
-            self.run_test_file(frame, test['path'])
+            try:
+                self.run_test_file(frame, test['path'])
+            except JSBridgeDisconnectError:
+                pass # TODO
 
         # stop the runner
         self.stop_runner()
