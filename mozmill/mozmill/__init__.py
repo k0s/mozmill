@@ -143,7 +143,6 @@ class MozMill(object):
         self.add_listener(self.persist_listener, eventType="mozmill.persist")
         self.add_listener(self.endRunner_listener, eventType='mozmill.endRunner')
         self.add_listener(self.startTest_listener, eventType='mozmill.setTest')
-#        self.add_listener(self.endTest_listener, eventType='mozmill.endTest')
         self.add_listener(self.userShutdown_listener, eventType='mozmill.userShutdown')
 
         # add listeners for event handlers
@@ -171,14 +170,6 @@ class MozMill(object):
 
     def startTest_listener(self, test):
         self.current_test = test
-
-    def endTest_listener(self, test):
-        """respond to test restarts"""
-        if not self.shutdownMode:
-            return # default: do not shutdown
-        user = self.shutdownMode.get('user', False)
-        restart = self.shutdownMode.get('restart', False)
-        self.endRunnerCalled = True
 
     def endRunner_listener(self, obj):
         self.endRunnerCalled = True
@@ -335,7 +326,6 @@ class MozMill(object):
             sleep(0.25)
         else:
             raise Exception('endRunner was never called. There must have been a failure in the framework')
-
 
     def stop(self):
         """cleanup and invoking of final handlers"""
