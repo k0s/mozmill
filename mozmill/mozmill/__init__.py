@@ -209,6 +209,8 @@ class MozMill(object):
         # if user_restart we don't need to start the browser back up
         if not (self.shutdownMode.get('user', False)
                 and self.shutdownMode.get('restart', False)):
+            if self.shutdownMode.get('resetProfile'):
+                self.runner.reset() # reset the profile
             self.runner.start()
 
         # create the network
