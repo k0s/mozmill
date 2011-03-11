@@ -143,7 +143,7 @@ class MozMill(object):
         self.add_listener(self.persist_listener, eventType="mozmill.persist")
         self.add_listener(self.endRunner_listener, eventType='mozmill.endRunner')
         self.add_listener(self.startTest_listener, eventType='mozmill.setTest')
-        self.add_listener(self.endTest_listener, eventType='mozmill.endTest')
+#        self.add_listener(self.endTest_listener, eventType='mozmill.endTest')
         self.add_listener(self.userShutdown_listener, eventType='mozmill.userShutdown')
 
         # add listeners for event handlers
@@ -179,11 +179,6 @@ class MozMill(object):
         user = self.shutdownMode.get('user', False)
         restart = self.shutdownMode.get('restart', False)
         self.endRunnerCalled = True
-        if not (user and restart):
-            print 'foo'
-#            self.stop_runner()
-            print 'bar'
-        #frame = self.start_runner()
 
     def endRunner_listener(self, obj):
         self.endRunnerCalled = True
@@ -244,7 +239,23 @@ class MozMill(object):
         return frame
 
     def run_test_file(self, frame, path, name=None):
-        frame.runTestFile(path, False, name)
+        try:
+            frame.runTestFile(path, False, name)
+        except JSBridgeDisconnectError:
+            for i in ('current_test', 'shutdownMode', 'endRunnerCalled'):
+                print i + ':'
+                print getattr(self, i)
+                print
+            import pdb; pdb.set_trace()
+            # if the runner is restarted via JS, run this test
+            # again if the next is specified
+            if self.shutdownMode:
+                nextTest = self.shutdownMode.get('next')
+                if nextTest:
+                    frame = self.start_runner()
+                    self.run_test_file(fame, path, nextTest)
+            else:
+                raise
 
     def run_tests(self, tests):
         """run test files"""
@@ -265,7 +276,7 @@ class MozMill(object):
         try:
             self.run_tests(tests)
         except JSBridgeDisconnectError:
-            if not self.shutdownMode:
+            if self.shutdownMode:
                 self.report_disconnect()
                 raise
             
