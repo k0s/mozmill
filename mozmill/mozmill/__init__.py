@@ -253,7 +253,7 @@ class MozMill(object):
                 nextTest = self.shutdownMode.get('next')
                 if nextTest:
                     frame = self.start_runner()
-                    self.run_test_file(fame, path, nextTest)
+                    self.run_test_file(frame, path, nextTest)
             else:
                 raise
 
