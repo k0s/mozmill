@@ -232,6 +232,13 @@ class MozMill(object):
         return frame
 
     def run_test_file(self, frame, path, name=None):
+        """
+        run a single test file
+        - frame : JS frame object
+        - path : path to the test file
+        - name : name of test to run; if None, run all tests
+        """
+        
         try:
             frame.runTestFile(path, False, name)
         except JSBridgeDisconnectError:
@@ -239,6 +246,8 @@ class MozMill(object):
             # again if the next is specified
             nextTest = self.shutdownMode.get('next')
             if not nextTest:
+                # if there is not a next test,
+                # throw the error up the chain
                 raise
             frame = self.start_runner()
             self.run_test_file(frame, path, nextTest)
@@ -256,6 +265,8 @@ class MozMill(object):
                 self.run_test_file(frame, test['path'])
             except JSBridgeDisconnectError:
                 if self.shutdownMode and tests:
+                    # if the test initiates shutdown and there are other tests
+                    # restart the runner
                     frame = self.start_runner()
 
         # stop the runner
