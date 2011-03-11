@@ -245,11 +245,10 @@ class MozMill(object):
             # if the runner is restarted via JS, run this test
             # again if the next is specified
             nextTest = self.shutdownMode.get('next')
-            if nextTest:
-                frame = self.start_runner()
-                self.run_test_file(frame, path, nextTest)
-            else:
+            if not nextTest:
                 raise
+            frame = self.start_runner()
+            self.run_test_file(frame, path, nextTest)
 
     def run_tests(self, tests):
         """run test files"""
