@@ -137,7 +137,7 @@ class MozMill(object):
         self.persisted = {}
 
         # shutdown parameters
-        self.currentShutdownMode = {}
+        self.shutdownMode = {}
         self.endRunnerCalled = False
 
         # setup event listeners
