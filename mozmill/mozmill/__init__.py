@@ -270,6 +270,8 @@ class MozMill(object):
                     # if the test initiates shutdown and there are other tests
                     # restart the runner
                     frame = self.start_runner()
+                else:
+                    riase
 
         # stop the runner
         self.stop_runner()
@@ -280,7 +282,7 @@ class MozMill(object):
         try:
             self.run_tests(tests)
         except JSBridgeDisconnectError:
-            if not self.userShutdownEnabled:
+            if not self.shutdownMode:
                 self.report_disconnect()
                 raise
             
