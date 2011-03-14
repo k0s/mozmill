@@ -271,7 +271,7 @@ class MozMill(object):
                     # restart the runner
                     frame = self.start_runner()
                 else:
-                    riase
+                    raise
 
         # stop the runner
         self.stop_runner()
