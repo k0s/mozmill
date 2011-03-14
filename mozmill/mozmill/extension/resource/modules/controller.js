@@ -37,7 +37,7 @@
 //
 // ***** END LICENSE BLOCK *****
 
-var EXPORTED_SYMBOLS = ["MozMillController", "waitForEval",
+var EXPORTED_SYMBOLS = ["MozMillController", "waitForEval", "MozMillAsyncTest",
                         "globalEventRegistry", "sleep"];
 
 var EventUtils = {}; Components.utils.import('resource://mozmill/stdlib/EventUtils.js', EventUtils);
@@ -737,7 +737,8 @@ MozMillController.prototype.stopApplication = function (resetProfile)
 {
   // stop the application via the python runner
   // - resetProfile : whether to reset the profile after shutdown
-  this.fireEvent('userShutdown', {'type': 'runner_shutdown',
+  this.fireEvent('userShutdown', {'user': false,
+                                  'restart': false,
                                   'resetProfile': Boolean(resetProfile)});
   utils.getMethodInWindows('goQuitApplication')();
 }
