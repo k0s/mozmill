@@ -389,12 +389,20 @@ class CLI(mozrunner.CLI):
 
     def __init__(self, args):
 
+        # event handler plugin names
+        self.handlers = {}
+        for cls in handlers.handlers():
+            name = getattr(cls, 'name', cls.__name__)
+            self.handlers[name] = cls
+
         # add and parse options
         mozrunner.CLI.__init__(self, args)
 
-        # instantiate plugins
+        # instantiate event handler plugins
         self.event_handlers = []
-        for cls in handlers.handlers():
+        for name, cls in self.handlers.items():
+            if name in self.options.disable:
+                continue
             handler = handlers.instantiate_handler(cls, self.options)
             if handler is not None:
                 self.event_handlers.append(handler)
@@ -423,37 +431,45 @@ class CLI(mozrunner.CLI):
             self.parser.exit()
 
     def add_options(self, parser):
+        """add command line options"""
+        
         group = OptionGroup(parser, 'MozRunner options')
         mozrunner.CLI.add_options(self, group)
         parser.add_option_group(group)
 
         group = OptionGroup(parser, 'MozMill options')
         group.add_option("-t", "--test", dest="tests",
-                          action='append', default=[],
-                          help='Run test')
+                         action='append', default=[],
+                         help='Run test')
         group.add_option("--timeout", dest="timeout", type="float",
-                          default=60., 
-                          help="seconds before harness timeout if no communication is taking place")
+                         default=60., 
+                         help="seconds before harness timeout if no communication is taking place")
         group.add_option("--restart", dest='restart', action='store_true',
-                          default=False,
-                          help="operate in restart mode")
-        group.add_option("-m", "--manifest", dest='manifests', action='append',
-                          help='test manifest .ini file')
+                         default=False,
+                         help="operate in restart mode")
+        group.add_option("-m", "--manifest", dest='manifests',
+                         action='append',
+                         metavar='MANIFEST',
+                         help='test manifest .ini file')
         group.add_option('-D', '--debug', dest="debug", 
-                          action="store_true",
-                          help="debug mode",
-                          default=False)
+                         action="store_true",
+                         help="debug mode",
+                         default=False)
         group.add_option('-P', '--port', dest="port", type="int",
-                          default=24242,
-                          help="TCP port to run jsbridge on.")
+                         default=24242,
+                         help="TCP port to run jsbridge on.")
         group.add_option('--list-tests', dest='list_tests',
-                          action='store_true', default=False,
-                          help="list test files that would be run, in order")
+                         action='store_true', default=False,
+                         help="list test files that would be run, in order")
+        if self.handlers:
+            group.add_option('--disable', dest='disable', metavar='HANDLER',
+                             action='append', default=[],
+                             help="disable a default event handler (%s)" % ','.join(self.handlers.keys()))
+
         parser.add_option_group(group)
 
-        for cls in handlers.handlers():
+        for name, cls in self.handlers.items():
             if hasattr(cls, 'add_options'):
-                name = getattr(cls, 'name', cls.__name__)
                 group = OptionGroup(parser, '%s options' % name,
                                     description=getattr(cls, '__doc__', None))
                 cls.add_options(group)
