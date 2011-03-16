@@ -154,8 +154,9 @@ class MozMill(object):
         self.handlers = [results]
         self.handlers.extend(handlers)
         for handler in self.handlers:
-            for event, method in handler.events().items():
-                self.add_listener(method, eventType=event)
+            if hasattr(handler, 'events'):
+                for event, method in handler.events().items():
+                    self.add_listener(method, eventType=event)
             if hasattr(handler, '__call__'):
                 self.add_global_listener(handler)
 
@@ -406,6 +407,15 @@ class CLI(mozrunner.CLI):
             handler = handlers.instantiate_handler(cls, self.options)
             if handler is not None:
                 self.event_handlers.append(handler)
+        for handler in self.options.handlers:
+            # user handlers
+            try:
+                cls = handlers.load_handler(handler)
+            except BaseException, e:
+                self.parser.error(str(e))
+            _handler = handlers.instantiate_handler(cls, self.options)
+            if _handler is not None:
+                self.event_handlers.append(_handler)
 
         # read tests from manifests (if any)
         self.manifest = manifestparser.TestManifest(manifests=self.options.manifests)
@@ -461,6 +471,9 @@ class CLI(mozrunner.CLI):
         group.add_option('--list-tests', dest='list_tests',
                          action='store_true', default=False,
                          help="list test files that would be run, in order")
+        group.add_option('--handler', dest='handlers', metavar='PATH:CLASS',
+                         action='append', default=[],
+                         help="specify a event handler given a file PATH and the CLASS in the file")
         if self.handlers:
             group.add_option('--disable', dest='disable', metavar='HANDLER',
                              action='append', default=[],
@@ -547,7 +560,7 @@ class CLI(mozrunner.CLI):
         mozmill.stop()
 
         # do whatever reporting you're going to do
-        results.stop(self.event_handlers)
+        results.stop(self.event_handlers, fatal=exception is not None)
 
         # exit on bad stuff happen
         if exception:
