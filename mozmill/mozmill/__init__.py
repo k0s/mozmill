@@ -167,7 +167,7 @@ class MozMill(object):
     ### methods for event listeners
 
     def add_listener(self, callback, eventType):
-        self.listner_dict.setdefault(eventType, []).append(callback)
+        self.listener_dict.setdefault(eventType, []).append(callback)
         self.listeners.append((callback, {'eventType': eventType}))
 
     def add_global_listener(self, callback):
