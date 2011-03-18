@@ -260,24 +260,35 @@ class MozMill(object):
     def run_tests(self, tests):
         """run test files"""
 
-        # start the runner
-        frame = self.start_runner()
-        
         # run tests
+        running = False
         while tests:
+
+            # start the runner
+            if not running:
+                frame = self.start_runner()
+                running = True
+
+            # run the test
             test = tests.pop(0)
             try:
                 self.run_test_file(frame, test['path'])
             except JSBridgeDisconnectError:
-                if self.shutdownMode and tests:
-                    # if the test initiates shutdown and there are other tests
-                    # restart the runner
-                    frame = self.start_runner()
+                if self.shutdownMode:
+                    running = False
                 else:
                     raise
 
+            # reset things for restart tests
+            if test.get('type') == 'restart':
+                if running:
+                    self.stop_runner()
+                    running = False
+                self.runner.cleanup() # reset the profile
+
         # stop the runner
-        self.stop_runner()
+        if running:
+            self.stop_runner()
 
     def run(self, tests):
         """run the tests"""
@@ -519,20 +530,20 @@ class CLI(mozrunner.CLI):
         
     def run(self):
 
-        # groups of tests to run together
-        tests = self.manifest.tests[:]
-        test_groups = [[]] 
-        while tests:
-            test = tests.pop(0)
-            if test.get('type') == 'restart':
-                test_groups.append([test])
-                test_groups.append([]) # make a new group for non-restart tests
-                continue
-            test_groups[-1].append(test)
-        test_groups = [i for i in test_groups if i] # filter out empty groups
+#         # groups of tests to run together
+#         tests = self.manifest.tests[:]
+#         test_groups = [[]] 
+#         while tests:
+#             test = tests.pop(0)
+#             if test.get('type') == 'restart':
+#                 test_groups.append([test])
+#                 test_groups.append([]) # make a new group for non-restart tests
+#                 continue
+#             test_groups[-1].append(test)
+#         test_groups = [i for i in test_groups if i] # filter out empty groups
 
         # make sure you have tests to run
-        if not test_groups:
+        if not self.manifest.tests:
             self.parser.error("No tests found. Please specify tests with -t or -m")
         
         # create a place to put results
@@ -551,8 +562,7 @@ class CLI(mozrunner.CLI):
         # run the tests
         exception = None # runtime exception
         try:
-            for test_group in test_groups:
-                mozmill.run(test_group)
+            mozmill.run(self.manifest.tests[:])
         except:
             exception_type, exception, tb = sys.exc_info()
 
