@@ -530,18 +530,6 @@ class CLI(mozrunner.CLI):
         
     def run(self):
 
-#         # groups of tests to run together
-#         tests = self.manifest.tests[:]
-#         test_groups = [[]] 
-#         while tests:
-#             test = tests.pop(0)
-#             if test.get('type') == 'restart':
-#                 test_groups.append([test])
-#                 test_groups.append([]) # make a new group for non-restart tests
-#                 continue
-#             test_groups[-1].append(test)
-#         test_groups = [i for i in test_groups if i] # filter out empty groups
-
         # make sure you have tests to run
         if not self.manifest.tests:
             self.parser.error("No tests found. Please specify tests with -t or -m")
