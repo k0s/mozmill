@@ -279,6 +279,13 @@ class MozMill(object):
         # run tests
         while tests:
             test = tests.pop(0)
+            if 'disabled' in test:
+                obj = {'test': test['path'] }
+                reason = test['disabled'].strip()
+                if reason:
+                    obj['reason'] = reason
+                self.fire_event('mozmill.skip', obj)
+                continue
             try:
                 self.run_test_file(frame, test['path'])
             except JSBridgeDisconnectError:
