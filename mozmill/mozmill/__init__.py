@@ -284,7 +284,9 @@ class MozMill(object):
                 if running:
                     self.stop_runner()
                     running = False
-                self.runner.cleanup() # reset the profile
+                    
+                # signal profile reset
+                self.shutdownMode['resetProfile'] = True 
 
         # stop the runner
         if running:
