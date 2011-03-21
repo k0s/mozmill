@@ -243,6 +243,8 @@ events.fail = function (obj) {
   events.fireEvent('fail', obj);
 }
 events.skip = function (reason) {
+  // this is used to report skips associated with setupModule and setupTest
+  // and nothing else
   events.currentTest.skipped = true;
   events.currentTest.skipped_reason = reason;
   for each(var timer in timers) {
