@@ -197,6 +197,9 @@ class MozMill(object):
     def fire_event(self, event, obj):
         """fire an event from the python side"""
 
+        # namespace the event
+        event = 'mozmill.' + event
+
         # global listeners
         for callback in self.global_listeners:
             callback(event, obj)
@@ -291,7 +294,7 @@ class MozMill(object):
                        'skipped': True,
                        'skipped_reason': test['disabled']
                        }
-                self.fire_event('mozmill.skip', obj)
+                self.fire_event('endTest', obj)
                 continue
             try:
                 self.run_test_file(frame, test['path'])
