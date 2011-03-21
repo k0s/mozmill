@@ -280,10 +280,18 @@ class MozMill(object):
         while tests:
             test = tests.pop(0)
             if 'disabled' in test:
-                obj = {'test': test['path'] }
+
+                # see frame.js:events.endTest
+                obj = {'filename': test['path'],
+                       'passed': 0,
+                       'failed': 0,
+                       'passes': [],
+                       'fails': [],
+                       'name': os.path.basename(test['path']) # XXX should be consistent with test.__name__ ; see bug 643480
+                       }
                 reason = test['disabled'].strip()
                 if reason:
-                    obj['reason'] = reason
+                    obj
                 self.fire_event('mozmill.skip', obj)
                 continue
             try:
