@@ -287,11 +287,10 @@ class MozMill(object):
                        'failed': 0,
                        'passes': [],
                        'fails': [],
-                       'name': os.path.basename(test['path']) # XXX should be consistent with test.__name__ ; see bug 643480
+                       'name': os.path.basename(test['path']), # XXX should be consistent with test.__name__ ; see bug 643480
+                       'skipped': True,
+                       'skipped_reason': test['disabled']
                        }
-                reason = test['disabled'].strip()
-                if reason:
-                    obj
                 self.fire_event('mozmill.skip', obj)
                 continue
             try:
