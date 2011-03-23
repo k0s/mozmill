@@ -133,9 +133,12 @@ choices = {'os': ['linux', 'win', 'mac', 'unix'],
            'bits': [32, 64],
            'processor': ['x86', 'x86_64', 'ppc']}
 
+# convenience boolean for 64-bit architecture
+is64bit = info['bits'] == 64
+
 # exports
 __all__ = info.keys()
-__all__ += ['info', 'unknown', 'main', 'choices']
+__all__ += ['info', 'unknown', 'main', 'choices', 'is64bit']
 
 # convenience booleans for operating systems
 for choice in choices['os']:
@@ -147,6 +150,7 @@ for choice in choices['os']:
 if isLinux:
     # linux is also unix
     isUnix = True
+
 
 # throw these in the module global scope  
 globals().update(info)
