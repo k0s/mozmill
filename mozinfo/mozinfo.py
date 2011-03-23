@@ -72,7 +72,7 @@ unknown = unknown() # singleton
 
 # get system information
 
-info = {'os': unknown,
+info = {'os_name': unknown,
         'processor': unknown,
         'version': unknown,
         'bits': unknown }
@@ -84,7 +84,7 @@ info = {'os': unknown,
 info['osfullname'] = system
 
 if system in ["Microsoft", "Windows"]:
-    info['os'] = 'win'
+    info['os_name'] = 'win'
     
     # There is a Python bug on Windows to determine platform values
     # http://bugs.python.org/issue7860
@@ -100,13 +100,13 @@ elif system == "Linux":
     version = distro + " " + version
     if not processor:
         processor = machine
-    info['os'] = 'linux'
+    info['os_name'] = 'linux'
 elif system == "Darwin":
     (release, versioninfo, machine) = platform.mac_ver()
     version = "OS X " + release
-    info['os'] = 'mac'
+    info['os_name'] = 'mac'
 elif sys.platform in ('solaris', 'sunos5'):
-    info['os'] = 'unix'
+    info['os_name'] = 'unix'
     version = sys.platform
 
 # processor type and bits
@@ -129,7 +129,7 @@ info.update({'version': version,
             })
 
 # possible values for information
-choices = {'os': ['linux', 'win', 'mac', 'unix'],
+choices = {'os_name': ['linux', 'win', 'mac', 'unix'],
            'bits': [32, 64],
            'processor': ['x86', 'x86_64', 'ppc']}
 
@@ -141,11 +141,11 @@ __all__ = info.keys()
 __all__ += ['info', 'unknown', 'main', 'choices', 'is64bit']
 
 # convenience booleans for operating systems
-for choice in choices['os']:
+for choice in choices['os_name']:
     key = 'is%s' % choice.title()
     globals()[key] = False
     __all__.append(key)
-    if info['os'] == choice:
+    if info['os_name'] == choice:
         globals()[key] = True
 if isLinux:
     # linux is also unix
