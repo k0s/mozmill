@@ -80,6 +80,9 @@ info = {'os': unknown,
 (system, node, release, version, machine, processor) = platform.uname()
 (bits, linkage) = platform.architecture()
 
+# keep track of full information
+info['osfullname'] = system
+
 if system in ["Microsoft", "Windows"]:
     info['os'] = 'win'
     
