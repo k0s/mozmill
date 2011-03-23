@@ -67,7 +67,7 @@ class unknown(object):
     def __nonzero__(self):
         return False
     def __str__(self):
-        return 'n/a' # not available
+        return 'UNKNOWN' # not available
 unknown = unknown() # singleton
 
 # get system information
