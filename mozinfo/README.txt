@@ -32,7 +32,7 @@ In addition, mozinfo exports a dictionary, ``mozinfo.info``, that
 contain these values.  mozinfo also exports:
 
  - choices: a dictionary of possible values for os, bits, and
-   processor
+            processor
  - main: the console_script entry point for mozinfo
  - unknown: a singleton denoting a value that cannot be determined
 
@@ -40,6 +40,15 @@ unknown has the string representation "UNKNOWN". unknown will evaluate
 as False when used as a bool in python::
 
  if not mozinfo.os: ... # unknown!
+
+The ``mozinfo`` module also has convenience checks for which operating
+system you are on (based on choices).  For example, instead of doing
+``if mozinfo.os == 'linux':`` you can equivalently do 
+``if mozinfo.isLinux:``. All values for ``isLinux``, ``isWin``,
+``isMac``, and ``isUnix`` will be False save for the platform you're
+on, except in the case of ``isLinux`` where ``isUnix`` will also be
+True since linux is a unix flavor (whether this is true for mac or not
+is ambiguous so ``isUnix`` is false if ``isMac`` is true).
 
 
 Command Line Usage
@@ -60,3 +69,8 @@ Three of these fields, os, bits, and processor, have a finite set of
 choices.  You may display the value of these choices using 
 ``mozmill --os``, ``mozmill --bits``, and ``mozmill --processor``. 
 ``mozmill --help`` documents command-line usage.
+
+Example output of ``mozinfo --os``::
+
+ os choices: linux win mac unix
+
