@@ -124,9 +124,8 @@ info.update({'version': version,
              'bits': int(bits),
              'hostname': node,
             })
-  
-globals().update(info)
 
+# possible values for information
 choices = {'os': ['linux', 'win', 'mac', 'unix'],
            'bits': [32, 64],
            'processor': ['x86', 'x86_64', 'ppc']}
@@ -135,6 +134,21 @@ choices = {'os': ['linux', 'win', 'mac', 'unix'],
 __all__ = info.keys()
 __all__ += ['info', 'unknown', 'main', 'choices']
 
+# convenience booleans for operating systems
+for choice in choices['os']:
+    key = 'is%s' % choice.title()
+    globals()[key] = False
+    __all__.append(key)
+    if info['os'] == choice:
+        globals()[key] = True
+if isLinux:
+    # linux is also unix
+    isUnix = True
+
+# throw these in the module global scope  
+globals().update(info)
+
+# CLI entry point
 def main(args=None):
     from optparse import OptionParser
     parser = OptionParser()
@@ -144,6 +158,7 @@ def main(args=None):
                           help="display choices for %s" % key)
     options, args = parser.parse_args()
     # XXX currently ignore args
+    # could use these to read from an e.g. .ini file
 
     flag = False
     for key, value in options.__dict__.items():
