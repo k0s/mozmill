@@ -8,10 +8,14 @@ specific check necessary for (e.g.) an operating system?  Because
 information is not consolidated, checks are not done consistently, nor
 is it defined what we are checking for.
 
-MozInfo proposes to solve this problem.  The current [beta]
-implementation gives five key, values: os, hostname, version, bits,
-and processor. (Additionally, the service pack is available on
-windows, though probably only for legacy reasons.)
+Mozilla programs also need to report information and include platform
+information when reporting.  MozInfo may be used as a unified
+interface for gathering and presenting this information.
+
+MozInfo proposes to solve these problem.  The current [beta]
+implementation gives several key, values: os, osfullname, hostname,
+version, bits, and processor. (Additionally, the service pack is
+available on windows, though probably only for legacy reasons.)
 
 
 API Usage
