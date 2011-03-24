@@ -44,7 +44,7 @@ file for interface to transform introspected system information to a format
 pallatable to Mozilla
 
 Information:
-- os : what operating system ['win', 'mac', 'linux', ...?]
+- os_name : what operating system ['win', 'mac', 'linux', ...?]
 - bits : 32 or 64
 - processor : processor architecture ['x86', 'x86_64', 'ppc'
 - version : operating system version string
