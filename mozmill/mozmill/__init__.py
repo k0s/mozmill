@@ -400,6 +400,7 @@ def collect_tests(path):
     if os.path.isfile(path):
         return [path]
 
+    assert os.path.isdir(path)
     files = []
     for filename in sorted(os.listdir(path)):
         if filename.startswith("test"):
@@ -453,7 +454,7 @@ class CLI(mozrunner.CLI):
         # expand user directory and check existence for the test
         for test in self.options.tests:
             test = os.path.expanduser(test)
-            if not os.path.exists(test):
+            if not os.path.exists(test) or (not os.path.isfile(test) or not os.path.isdir(test)):
                 raise Exception("Not a valid test file/directory: %s" % test)
 
             # collect the tests
