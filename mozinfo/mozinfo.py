@@ -77,7 +77,7 @@ info = {'os_name': unknown,
 (bits, linkage) = platform.architecture()
 
 # keep track of full information
-info['osfullname'] = system
+info['pretty_os_name'] = system
 
 if system in ["Microsoft", "Windows"]:
     info['os_name'] = 'win'
