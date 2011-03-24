@@ -53,10 +53,6 @@ Information:
 For windows, the service pack information is also included
 """
 
-# TODO: it might be a good idea of adding a system name (e.g. 'Ubuntu' for
-# linux) to the information; I certainly wouldn't want anyone parsing this
-# information and having behaviour depend on it
-
 import os
 import platform
 import re
