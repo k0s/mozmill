@@ -59,9 +59,15 @@ extension_path = os.path.join(basedir, 'extension')
 mozmillModuleJs = "Components.utils.import('resource://mozmill/modules/mozmill.js')"
 package_metadata = mozrunner.get_metadata_from_egg('mozmill')
 
+# defaults
+addons = [extension_path, jsbridge.extension_path]
+jsbridge_port = 24242
+jsbridge_timeout = 60. # timeout for jsbridge
+
+
 class TestResults(object):
     """
-    accumulate test results for Mozmill
+    class to accumulate test results for Mozmill
     """
     def __init__(self):
 
@@ -111,11 +117,11 @@ class MozMill(object):
     MozMill is a test runner  You should use MozMill as follows:
 
     m = MozMill(...)
-    m.run(tests)
-    m.stop()
+    results = m.run(tests)
+    results.stop(...)
     """
 
-    def __init__(self, runner, results, jsbridge_port=24242, jsbridge_timeout=60, handlers=()):
+    def __init__(self, runner, results=None, jsbridge_port=jsbridge_port, jsbridge_timeout=jsbridge_timeout, handlers=()):
         """
         - runner : a MozRunner instance to run the app
         - results : a TestResults instance to accumulate results
@@ -125,10 +131,10 @@ class MozMill(object):
         """
 
         # the MozRunner
-        self.runner = runner
+        self.runner = runner 
 
         # mozmill puts your data here
-        self.results = results 
+        self.results = results or TestResults()
 
         # jsbridge parameters
         self.jsbridge_port = jsbridge_port
@@ -314,13 +320,16 @@ class MozMill(object):
 
     def run(self, tests):
         """run the tests"""
-
+        
         try:
             self.run_tests(tests)
         except JSBridgeDisconnectError:
             if not self.shutdownMode:
                 self.report_disconnect()
                 raise
+            
+        self.stop() # shutdown the test harness cleanly
+        return self.results
             
     def get_appinfo(self, bridge):
         """ Collect application specific information """
@@ -397,7 +406,7 @@ class MozMill(object):
 ### method for test collection
 
 def collect_tests(path):
-    """find all tests for a given path"""
+    """find all tests for a given path (depth-first)"""
 
     path = os.path.abspath(path)
     if os.path.isfile(path):
@@ -482,7 +491,7 @@ class CLI(mozrunner.CLI):
                          action='append', default=[],
                          help='Run test')
         group.add_option("--timeout", dest="timeout", type="float",
-                         default=60., 
+                         default=jsbridge_timeout, 
                          help="seconds before harness timeout if no communication is taking place")
         group.add_option("--restart", dest='restart', action='store_true',
                          default=False,
@@ -496,7 +505,7 @@ class CLI(mozrunner.CLI):
                          help="debug mode",
                          default=False)
         group.add_option('-P', '--port', dest="port", type="int",
-                         default=24242,
+                         default=jsbridge_port,
                          help="TCP port to run jsbridge on.")
         group.add_option('--list-tests', dest='list_tests',
                          action='store_true', default=False,
@@ -526,8 +535,7 @@ class CLI(mozrunner.CLI):
         this command-line interface
         """
         profile_args = mozrunner.CLI.profile_args(self)
-        profile_args['addons'].append(extension_path)
-        profile_args['addons'].append(jsbridge.extension_path)
+        profile_args.setdefault('addons', []).extend(addons)
 
         if self.options.debug:
             profile_args['preferences'] = {
@@ -578,9 +586,6 @@ class CLI(mozrunner.CLI):
                 mozmill.run(self.manifest.tests[:])
         except:
             exception_type, exception, tb = sys.exc_info()
-
-        # shutdown the test harness cleanly
-        mozmill.stop()
 
         # do whatever reporting you're going to do
         results.stop(self.event_handlers, fatal=exception is not None)
