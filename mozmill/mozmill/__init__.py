@@ -403,7 +403,7 @@ class MozMill(object):
             self.runner.cleanup()
 
 
-### method for test collection
+### integration methods
 
 def collect_tests(path):
     """find all tests for a given path (depth-first)"""
@@ -422,6 +422,8 @@ def collect_tests(path):
                 files.append(full)
     return files
 
+def create_runner(app='firefox'):
+    """create a MozRunner instance"""
         
 ### command line interface
 
