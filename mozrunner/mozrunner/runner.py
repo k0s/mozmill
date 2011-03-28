@@ -316,7 +316,7 @@ class CLI(object):
             self.runner_class = ThunderbirdRunner
             self.profile_class = ThunderbirdProfile
         else:
-            self.parser.error('Application "%s" unknown (should be one of "firefox" or "thunderbird"' % self.options.app)
+            self.parser.error('Application "%s" unknown (should be one of "firefox" or "thunderbird")' % self.options.app)
 
     def add_options(self, parser):
         """add options to the parser"""
