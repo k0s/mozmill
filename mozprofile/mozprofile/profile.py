@@ -162,7 +162,7 @@ class Profile(object):
         for addon in addons:
             tmpdir = None
             if addon.endswith('.xpi'):
-                tmpdir = tempfile.mkdtemp(suffix = "." + os.path.split(addon)[-1])
+                tmpdir = tempfile.mkdtemp(suffix="."+os.path.split(addon)[-1])
                 compressed_file = zipfile.ZipFile(addon, "r")
                 for name in compressed_file.namelist():
                     if name.endswith('/'):
