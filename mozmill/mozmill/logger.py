@@ -187,8 +187,3 @@ class ColorFormatter(logging.Formatter):
       levelname_color = self.COLOR_SEQ % fore_color + levelname + self.RESET_SEQ
       record.levelname = levelname_color
     return logging.Formatter.format(self, record)
-
-    
-
-
-    
