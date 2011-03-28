@@ -279,17 +279,17 @@ class MozMill(object):
             frame = self.start_runner()
             self.run_test_file(frame, path, nextTest)
 
-    def run_tests(self, tests):
+    def run_tests(self, *tests):
         """run test files"""
 
-        # start the runner
+        # note runner state
         started = False
         
         # run tests
         while tests:
             test = tests.pop(0)
-            if 'disabled' in test:
-
+            
+            if 'disabled' in test: # skip test
                 # see frame.js:events.endTest
                 obj = {'filename': test['path'],
                        'passed': 0,
@@ -302,6 +302,7 @@ class MozMill(object):
                        }
                 self.fire_event('endTest', obj)
                 continue
+            
             try:
                 if not started:
                     frame = self.start_runner()
@@ -318,11 +319,11 @@ class MozMill(object):
         if started:
             self.stop_runner()
 
-    def run(self, tests):
+    def run(self, *tests):
         """run the tests"""
         
         try:
-            self.run_tests(tests)
+            self.run_tests(*tests)
         except JSBridgeDisconnectError:
             if not self.shutdownMode:
                 self.report_disconnect()
@@ -603,10 +604,10 @@ class CLI(mozrunner.CLI):
         try:
             if self.options.restart:
                 for test in self.manifest.tests:
-                    mozmill.run([test])
+                    mozmill.run(test)
                     runner.reset() # reset the profile
             else:
-                mozmill.run(self.manifest.tests[:])
+                mozmill.run(*self.manifest.tests)
         except:
             exception_type, exception, tb = sys.exc_info()
 
