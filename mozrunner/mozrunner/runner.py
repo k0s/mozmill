@@ -255,6 +255,7 @@ class FirefoxRunner(Runner):
     app_name = 'Firefox'
     profile_class = FirefoxProfile
 
+    # (platform-dependent) names of binary
     if sys.platform == 'darwin':
         names = ['firefox', 'minefield', 'shiretoko']
     elif sys.platform in ('linux2', 'sunos5', 'solaris'):
@@ -267,7 +268,7 @@ class FirefoxRunner(Runner):
 class ThunderbirdRunner(Runner):
     """Specialized Runner subclass for running Thunderbird"""
     app_name = 'Thunderbird'
-
+    profile_class = ThunderbirdProfile
     names = ["thunderbird", "shredder"]
 
 def create_runner(profile_class, runner_class,
