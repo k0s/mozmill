@@ -444,7 +444,7 @@ def create_runner(app='firefox', binary=None, profile_args=None, runner_args=Non
         cmdargs += ['-jsbridge', '%d' % jsbridge_port]
 
     # return an equipped runner
-    return mozrunner.create_profile(profile_class, runner_class, binary, profile_args, runner_args)
+    return mozrunner.create_runner(profile_class, runner_class, binary, profile_args, runner_args)
         
 ### command line interface
 
