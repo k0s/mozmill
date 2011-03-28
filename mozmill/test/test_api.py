@@ -20,6 +20,7 @@ results.stop(())
 # let's try the logging handler:
 from mozmill.logger import LoggerListener
 logger = LoggerListener()
+runner = mozmill.create_runner()
 m = mozmill.MozMill(runner, results=results, handlers=(logger,))
-results = m.run(tests)
+results = m.run(*tests)
 results.stop((logger,))
