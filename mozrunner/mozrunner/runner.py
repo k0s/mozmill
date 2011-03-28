@@ -76,9 +76,9 @@ class Runner(object):
     def __init__(self, profile, binary=None, cmdargs=None, env=None, kp_kwargs=None):
         self.process_handler = None
         self.profile = profile
-                 
-        self.binary = self.__class__.get_binary(binary)
 
+        # find the binary
+        self.binary = self.__class__.get_binary(binary)
         if not os.path.exists(self.binary):
             raise Exception("Binary path does not exist "+self.binary)
 
@@ -276,7 +276,6 @@ def create_runner(profile_class, runner_class,
     profile_args = profile_args or {}
     runner_args = runner_args or {}
     profile = profile_class(**profile_args)
-    binary = runner_class.get_binary(binary)
     runner = runner_class(binary=binary,
                           profile=profile,
                           **runner_args)
