@@ -13,7 +13,7 @@ tests = [{'path': os.path.join(here, 'test_runnershutdown.js')}]
 import mozmill
 runner = mozmill.create_runner()
 m = mozmill.MozMill(runner)
-results = m.run(tests)
+results = m.run(*tests)
 results.stop(())
 
 # this is how you use a handler

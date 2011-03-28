@@ -281,6 +281,7 @@ class MozMill(object):
 
     def run_tests(self, *tests):
         """run test files"""
+        tests = list(tests)
 
         # note runner state
         started = False
