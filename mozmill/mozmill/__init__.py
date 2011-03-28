@@ -438,7 +438,7 @@ def create_runner(app='firefox', binary=None, profile_args=None, runner_args=Non
     # get the necessary arguments to construct the profile and runner instance
     profile_args = profile_args or {}
     runner_args = runner_args or {}
-    profile_args.set_default('addons', []).extend(addons)
+    profile_args.setdefault('addons', []).extend(addons)
     cmdargs = runner_args.set_default('cmdargs', [])
     if '-jsbridge' not in cmdargs:
         cmdargs += ['-jsbridge', '%d' % jsbridge_port]
