@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-__all__ = ['Runner', 'ThunderbirdRunner', 'FirefoxRunner', 'create_runner', 'CLI', 'cli', 'get_metadata_from_egg', 'package_metadata']
+__all__ = ['Runner', 'ThunderbirdRunner', 'FirefoxRunner', 'CLI', 'cli', 'get_metadata_from_egg', 'package_metadata']
 
 import optparse
 import os
