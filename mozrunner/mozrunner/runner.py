@@ -76,7 +76,7 @@ class Runner(object):
     @classmethod
     def create(cls, binary=None, cmdargs=None, env=None, kp_kwargs=None, profile_args=None):
         profile = cls.profile_class(**(profile_args or {}))
-        return cls.__init__(profile, binary=binary, cmdargs=cmdargs, env=env, kp_kwargs=kp_kwargs)
+        return cls(profile, binary=binary, cmdargs=cmdargs, env=env, kp_kwargs=kp_kwargs)
 
     def __init__(self, profile, binary=None, cmdargs=None, env=None, kp_kwargs=None):
         self.process_handler = None
