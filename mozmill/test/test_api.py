@@ -16,6 +16,11 @@ m = mozmill.MozMill(runner)
 results = m.run(*tests)
 results.stop(())
 
+# there should be four passing tests
+passes = 4
+assert len(results.passes) == passes, "Wrong number of passes. Expected: %d; You got: %d" % (passes, len(results.passes))
+assert len(results.alltests) == passes, "Wrong number of tests. Expected: %d; You got: %d" % (passes, len(results.alltests))
+
 # this is how you use a handler
 # let's try the logging handler:
 from mozmill.logger import LoggerListener
@@ -24,3 +29,8 @@ runner = mozmill.create_runner()
 m = mozmill.MozMill(runner, results=results, handlers=(logger,))
 results = m.run(*tests)
 results.stop((logger,))
+
+# now there should be eight
+passes *= 2
+assert len(results.passes) == passes, "Wrong number of passes. Expected: %d; You got: %d" % (passes, len(results.passes))
+assert len(results.alltests) == passes, "Wrong number of tests. Expected: %d; You got: %d" % (passes, len(results.alltests))

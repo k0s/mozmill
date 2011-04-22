@@ -158,7 +158,7 @@ class MozMill(object):
         self.add_listener(self.userShutdown_listener, eventType='mozmill.userShutdown')
 
         # add listeners for event handlers
-        self.handlers = [results]
+        self.handlers = [self.results]
         self.handlers.extend(handlers)
         for handler in self.handlers:
             if hasattr(handler, 'events'):
