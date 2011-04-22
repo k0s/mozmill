@@ -91,7 +91,7 @@ class TestResults(object):
         """events the MozMill class will dispatch to"""
         return {'mozmill.endTest': self.endTest_listener}
 
-    def stop(self, handlers, fatal=False):
+    def finish(self, handlers, fatal=False):
         """do final reporting and such"""
         self.endtime = datetime.utcnow()
 
@@ -118,7 +118,7 @@ class MozMill(object):
 
     m = MozMill(...)
     results = m.run(tests)
-    results.stop(...)
+    results.finish(...)
     """
 
     @classmethod
@@ -615,7 +615,7 @@ class CLI(mozrunner.CLI):
             exception_type, exception, tb = sys.exc_info()
 
         # do whatever reporting you're going to do
-        results.stop(self.event_handlers, fatal=exception is not None)
+        results.finish(self.event_handlers, fatal=exception is not None)
 
         # exit on bad stuff happen
         if exception:

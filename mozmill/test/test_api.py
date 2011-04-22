@@ -13,7 +13,6 @@ tests = [{'path': os.path.join(here, 'test_runnershutdown.js')}]
 import mozmill
 m = mozmill.MozMill.create()
 results = m.run(*tests)
-results.stop(())
 
 # there should be four passing tests
 passes = 4
@@ -26,7 +25,7 @@ from mozmill.logger import LoggerListener
 logger = LoggerListener()
 m = mozmill.MozMill.create(results=results, handlers=(logger,))
 results = m.run(*tests)
-results.stop((logger,))
+results.finish((logger,))
 
 # now there should be eight
 passes *= 2
