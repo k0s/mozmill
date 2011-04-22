@@ -449,27 +449,6 @@ def collect_tests(path):
                 files.append(full)
     return files
 
-def create_runner(app='firefox', profile_args=None, runner_args=None):
-    """create a MozRunner instance setup for MozMill"""
-
-    # select runner and profile class for the given app
-    try:
-        runner_class = mozrunner.runners[app]
-    except KeyError:
-        raise NotImplementedError('Application "%s" unknown (should be one of "firefox" or "thunderbird")' % app)
-
-    # get the necessary arguments to construct the profile and runner instance
-    profile_args = profile_args or {}
-    runner_args = runner_args or {}
-    profile_args.setdefault('addons', []).extend(addons)
-    cmdargs = runner_args.setdefault('cmdargs', [])
-    if '-jsbridge' not in cmdargs:
-        cmdargs += ['-jsbridge', '%d' % jsbridge_port]
-    runner_args['profile_args'] = profile_args
-
-    # return an equipped runner
-    return runner_class.create(**runner_args)
-
         
 ### command line interface
 

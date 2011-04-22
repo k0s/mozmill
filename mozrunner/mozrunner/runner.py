@@ -372,7 +372,7 @@ class CLI(object):
                     profile_args=self.profile_args())
 
     def create_runner(self):
-        return self.runner_class.create(**self.runner_args)
+        return self.runner_class.create(**self.runner_args())
 
     def run(self):
         runner = self.create_runner()
