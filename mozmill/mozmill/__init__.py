@@ -121,6 +121,31 @@ class MozMill(object):
     results.stop(...)
     """
 
+    @classmethod
+    def create(cls, results=None, jsbridge_port=jsbridge_port, jsbridge_timeout=jsbridge_timeout, handlers=(),
+               app='firefox', profile_args=None, runner_args=None):
+
+        # select runner and profile class for the given app
+        try:
+            runner_class = mozrunner.runners[app]
+        except KeyError:
+            raise NotImplementedError('Application "%s" unknown (should be one of %s)' % (app, mozrunner.runners.keys()))
+
+        # get the necessary arguments to construct the profile and runner instance
+        profile_args = profile_args or {}
+        runner_args = runner_args or {}
+        profile_args.setdefault('addons', []).extend(addons)
+        cmdargs = runner_args.setdefault('cmdargs', [])
+        if '-jsbridge' not in cmdargs:
+            cmdargs += ['-jsbridge', '%d' % jsbridge_port]
+        runner_args['profile_args'] = profile_args
+
+        # create an equipped runner
+        runner = runner_class.create(**runner_args)
+
+        # create a mozmill
+        return cls(runner, results=results, jsbridge_port=jsbridge_port, jsbridge_timeout=jsbridge_timeout, handlers=handlers)
+
     def __init__(self, runner, results=None, jsbridge_port=jsbridge_port, jsbridge_timeout=jsbridge_timeout, handlers=()):
         """
         - runner : a MozRunner instance to run the app
@@ -131,7 +156,7 @@ class MozMill(object):
         """
 
         # the MozRunner
-        self.runner = runner 
+        self.runner = runner
 
         # mozmill puts your data here
         self.results = results or TestResults()
