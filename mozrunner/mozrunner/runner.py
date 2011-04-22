@@ -73,6 +73,11 @@ package_metadata = get_metadata_from_egg('mozrunner')
 class Runner(object):
     """Handles all running operations. Finds bins, runs and kills the process."""
 
+    @classmethod
+    def create(cls, binary=None, cmdargs=None, env=None, kp_kwargs=None, profile_args=None):
+        profile = cls.profile_class(**(profile_args or {}))
+        return cls.__init__(profile, binary=binary, cmdargs=cmdargs, env=env, kp_kwargs=kp_kwargs)
+
     def __init__(self, profile, binary=None, cmdargs=None, env=None, kp_kwargs=None):
         self.process_handler = None
         self.profile = profile
@@ -271,16 +276,9 @@ class ThunderbirdRunner(Runner):
     profile_class = ThunderbirdProfile
     names = ["thunderbird", "shredder"]
 
-def create_runner(profile_class, runner_class,
-                  binary=None, profile_args=None, runner_args=None):
-    """Get the runner object, a not-very-abstract factory"""
-    profile_args = profile_args or {}
-    runner_args = runner_args or {}
-    profile = profile_class(**profile_args)
-    runner = runner_class(binary=binary,
-                          profile=profile,
-                          **runner_args)
-    return runner    
+
+runners = {'firefox': FirefoxRunner,
+           'thunderbird': ThunderbirdRunner}
 
 class CLI(object):
     """Command line interface."""
@@ -309,13 +307,9 @@ class CLI(object):
             sys.exit(0)
 
         # choose appropriate runner and profile classes
-        if self.options.app == 'firefox':
-            self.runner_class = FirefoxRunner
-            self.profile_class = FirefoxProfile
-        elif self.options.app == 'thunderbird':
-            self.runner_class = ThunderbirdRunner
-            self.profile_class = ThunderbirdProfile
-        else:
+        try:
+            self.runner_class = runners[self.options.app]
+        except KeyError:
             self.parser.error('Application "%s" unknown (should be one of "firefox" or "thunderbird")' % self.options.app)
 
     def add_options(self, parser):
@@ -373,21 +367,17 @@ class CLI(object):
 
     def runner_args(self):
         """arguments to instantiate the runner class"""
-        return dict(cmdargs=self.command_args())
+        return dict(cmdargs=self.command_args(),
+                    binary=self.options.binary,
+                    profile_args=self.profile_args())
 
     def create_runner(self):
-        return create_runner(self.profile_class,
-                             self.runner_class,
-                             self.options.binary,
-                             self.profile_args(),
-                             self.runner_args())
+        return self.runner_class.create(**self.runner_args)
 
     def run(self):
         runner = self.create_runner()
         self.start(runner)
-        # XXX should be runner.cleanup,
-        # and other runner cleanup code should go in there
-        runner.profile.cleanup()
+        runner.cleanup()
 
     def start(self, runner):
         """Starts the runner and waits for Firefox to exitor Keyboard Interrupt.

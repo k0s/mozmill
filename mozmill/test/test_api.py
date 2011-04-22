@@ -16,6 +16,8 @@ m = mozmill.MozMill(runner)
 results = m.run(*tests)
 results.stop(())
 
+import pdb; pdb.set_trace()
+
 # this is how you use a handler
 # let's try the logging handler:
 from mozmill.logger import LoggerListener
