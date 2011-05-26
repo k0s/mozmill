@@ -49,16 +49,10 @@ from processhandler import ProcessHandler
 usage = """
 %prog [options] command [command-specific options]
 
-Supported Commands:
-  test       - run tests
-
-Internal Commands:
+Commands:
   testjs     - run mozmill js tests
   testpy     - run mozmill python tests
   testall    - test whole environment
-
-Experimental and internal commands and options are not supported and may be
-changed or removed in the future.
 """
 
 global_options = [
@@ -74,68 +68,61 @@ parser_groups = (
                                        help="profile directory to pass to app",
                                        metavar=None,
                                        default=None,
-                                       cmds=['test', 'testjs', 
-                                             'testpy', 'testall'])),
+                                       cmds=['testjs', 'testpy', 'testall'])),
         (("-b", "--binary",), dict(dest="binary",
                                    help="path to app binary",
                                    metavar=None,
                                    default=None,
-                                   cmds=['test', 'testjs', 'testpy',
-                                         'testall'])),
+                                   cmds=['testjs', 'testpy', 'testall'])),
         (("-a", "--app",), dict(dest="app",
                                 help=("app to run: firefox (default), "
                                       "xulrunner, fennec, or thunderbird"),
                                 metavar=None,
                                 default="firefox",
-                                cmds=['test', 'testjs', 'testpy',
-                                      'testall'])),
+                                cmds=['testjs', 'testpy', 'testall'])),
         (("", "--times",), dict(dest="iterations",
                                 type="int",
                                 help="number of times to run tests",
                                 default=1,
-                                cmds=['test', 'testjs', 'testpy',
-                                      'testall'])),
+                                cmds=['testjs', 'testpy', 'testall'])),
         (("-f", "--filter",), dict(dest="filter",
                                    help=("only run tests whose filenames "
                                          "match FILTER, a regexp"),
                                    metavar=None,
                                    default=None,
-                                   cmds=['test', 'testjs', 'testpy',
-                                         'testall'])),
+                                   cmds=['testjs', 'testpy', 'testall'])),
         (("-m", "--manifest",), dict(dest="manifest",
                                        help=("use a specific manifest rather than the "
                                              "default all-tests.ini"),
                                        metavar=None,
                                        default=os.path.join(os.path.dirname(__file__), "tests", "all-tests.ini"),
-                                       cmds=['test', 'testjs',
-                                             'testpy', 'testall'])),
+                                       cmds=['testjs', 'testpy', 'testall'])),
         (("", "--extra-packages",), dict(dest="extra_packages",
                                          help="extra packages to include, comma-separated. Default is 'None'.",
                                          metavar=None,
                                          default=None,
-                                         cmds=['test', 'testjs', 'testpy', 'testall'])),
+                                         cmds=['testjs', 'testpy', 'testall'])),
         ]
      ),
 
     ("Internal Command-Specific Options", [
         (("", "--addons",), dict(dest="addons",
-                                 help=("paths of addons to install, "
-                                       "comma-separated"),
+                                 help="paths of addons to install, comma-separated",
                                  metavar=None,
                                  default=None,
-                                 cmds=['test', 'run', 'testjs', 'testpy', 'testall'])),
+                                 cmds=['testjs', 'testpy', 'testall'])),
         (("", "--logfile",), dict(dest="logfile",
                                   help="log console output to file",
                                   metavar=None,
                                   default=None,
-                                  cmds=['test', 'testjs', 'testpy', 'testall'])),
+                                  cmds=['testjs', 'testpy', 'testall'])),
         # TODO: This should default to true once our memory debugging
         # issues are resolved; see bug 592774.
         (("", "--profile-memory",), dict(dest="profileMemory",
                                          help="profile memory usage (default is False)",
                                          action="store_true",
                                          default=False,
-                                         cmds=['test', 'testjs', 'testpy', 'testall'])),
+                                         cmds=['testjs', 'testpy', 'testall'])),
         ]
      ),
     )
@@ -147,7 +134,6 @@ def parse_args(arguments, global_options, usage, parser_groups, defaults=None):
 
     # create a parser
     parser = optparse.OptionParser(usage=usage.strip())
-
 
     # sort the options so that they print in a nice order
     def name_cmp(option):
