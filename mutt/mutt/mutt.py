@@ -49,6 +49,8 @@ from processhandler import ProcessHandler
 usage = """
 %prog [options] command [command-specific options]
 
+Mozmill Unit Test Tester : test the test harness! 
+
 Commands:
   testjs     - run mozmill js tests
   testpy     - run mozmill python tests
@@ -92,16 +94,11 @@ parser_groups = (
                                    default=None,
                                    cmds=['testjs', 'testpy', 'testall'])),
         (("-m", "--manifest",), dict(dest="manifest",
-                                       help=("use a specific manifest rather than the "
-                                             "default all-tests.ini"),
-                                       metavar=None,
-                                       default=os.path.join(os.path.dirname(__file__), "tests", "all-tests.ini"),
-                                       cmds=['testjs', 'testpy', 'testall'])),
-        (("", "--extra-packages",), dict(dest="extra_packages",
-                                         help="extra packages to include, comma-separated. Default is 'None'.",
-                                         metavar=None,
-                                         default=None,
-                                         cmds=['testjs', 'testpy', 'testall'])),
+                                     help=("use a specific manifest rather than the "
+                                           "default all-tests.ini"),
+                                     metavar=None,
+                                     default=os.path.join(os.path.dirname(__file__), "tests", "all-tests.ini"),
+                                     cmds=['testjs', 'testpy', 'testall'])),
         ]
      ),
 
