@@ -62,65 +62,45 @@ global_options = [
                                 help="enable lots of output",
                                 action="store_true",
                                 default=False)),
-    ]
-
-parser_groups = (
-    ("Supported Command-Specific Options", [
-        (("-p", "--profiledir",), dict(dest="profiledir",
-                                       help="profile directory to pass to app",
-                                       metavar=None,
-                                       default=None,
-                                       cmds=['testjs', 'testpy', 'testall'])),
-        (("-b", "--binary",), dict(dest="binary",
-                                   help="path to app binary",
+    (("-p", "--profiledir",), dict(dest="profiledir",
+                                   help="profile directory to pass to app",
                                    metavar=None,
                                    default=None,
-                                   cmds=['testjs', 'testpy', 'testall'])),
-        (("-a", "--app",), dict(dest="app",
-                                help=("app to run: firefox (default), "
-                                      "xulrunner, fennec, or thunderbird"),
-                                metavar=None,
-                                default="firefox",
-                                cmds=['testjs', 'testpy', 'testall'])),
-        (("", "--times",), dict(dest="iterations",
-                                type="int",
-                                help="number of times to run tests",
-                                default=1,
-                                cmds=['testjs', 'testpy', 'testall'])),
-        (("-f", "--filter",), dict(dest="filter",
-                                   help=("only run tests whose filenames "
-                                         "match FILTER, a regexp"),
-                                   metavar=None,
-                                   default=None,
-                                   cmds=['testjs', 'testpy', 'testall'])),
-        (("-m", "--manifest",), dict(dest="manifest",
-                                     help=("use a specific manifest rather than the "
-                                           "default all-tests.ini"),
-                                     metavar=None,
-                                     default=os.path.join(os.path.dirname(__file__), "tests", "all-tests.ini"),
-                                     cmds=['testjs', 'testpy', 'testall'])),
-        ]
-     ),
-
-    ("Internal Command-Specific Options", [
-        (("", "--addons",), dict(dest="addons",
-                                 help="paths of addons to install, comma-separated",
+                                   )),
+    (("-b", "--binary",), dict(dest="binary",
+                               help="path to app binary",
+                               metavar=None,
+                               default=None,)),
+    (("-a", "--app",), dict(dest="app",
+                            help="app to run: firefox (default), xulrunner, fennec, or thunderbird",
+                            metavar=None,
+                            default="firefox",)),
+    (("", "--times",), dict(dest="iterations",
+                            type="int",
+                            help="number of times to run tests",
+                            default=1,)),
+    (("-f", "--filter",), dict(dest="filter",
+                               help="only run tests whose filenames match FILTER, a regexp",
+                               metavar=None,
+                               default=None,)),
+    (("-m", "--manifest",), dict(dest="manifest",
+                                 help="use a specific manifest rather than the default all-tests.ini",
                                  metavar=None,
-                                 default=None,
-                                 cmds=['testjs', 'testpy', 'testall'])),
-        (("", "--logfile",), dict(dest="logfile",
-                                  help="log console output to file",
-                                  metavar=None,
-                                  default=None,
-                                  cmds=['testjs', 'testpy', 'testall'])),
-        ]
-     ),
-    )
+                                 default=os.path.join(os.path.dirname(__file__), "tests", "all-tests.ini"))),
+    (("", "--addons",), dict(dest="addons",
+                             help="paths of addons to install, comma-separated",
+                             metavar=None,
+                             default=None,)),
+    (("", "--logfile",), dict(dest="logfile",
+                              help="log console output to file",
+                              metavar=None,
+                              default=None,)),
+    ]
 
 # Maximum time we'll wait for tests to finish, in seconds.
 TEST_RUN_TIMEOUT = 5 * 60
 
-def parse_args(arguments, global_options, usage, parser_groups, defaults=None):
+def parse_args(arguments, global_options, usage, defaults=None):
 
     # create a parser
     parser = optparse.OptionParser(usage=usage.strip())
@@ -133,30 +113,14 @@ def parse_args(arguments, global_options, usage, parser_groups, defaults=None):
     # add the options
     for names, opts in global_options:
         parser.add_option(*names, **opts)
-    for group_name, options in parser_groups:
-        group = optparse.OptionGroup(parser, group_name)
-        options.sort(key=name_cmp)
-        for names, opts in options:
-            if 'cmds' in opts:
-                cmds = opts['cmds']
-                del opts['cmds']
-                cmds.sort()
-                if not 'help' in opts:
-                    opts['help'] = ""
-                opts['help'] += " (%s)" % ", ".join(cmds)
-            group.add_option(*names, **opts)
-        parser.add_option_group(group)
-
-    if defaults:
-        parser.set_defaults(**defaults)
 
     (options, args) = parser.parse_args(args=arguments)
 
+    # args[0] == command
     if len(args) != 1:
         parser.print_help()
         parser.exit()
-
-    return (options, args[0]) # args[0] == command
+    return (options, args[0]) 
 
 def get_pytests(testdict):
     unittests = []
@@ -301,7 +265,6 @@ def run(arguments=sys.argv[1:], defaults=None):
     # parse the command line arguments
     parser_kwargs = dict(arguments=arguments,
                          global_options=global_options,
-                         parser_groups=parser_groups,
                          usage=usage,
                          defaults=defaults)
     (options, command) = parse_args(**parser_kwargs)
