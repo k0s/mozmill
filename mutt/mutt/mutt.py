@@ -116,13 +116,6 @@ parser_groups = (
                                   metavar=None,
                                   default=None,
                                   cmds=['testjs', 'testpy', 'testall'])),
-        # TODO: This should default to true once our memory debugging
-        # issues are resolved; see bug 592774.
-        (("", "--profile-memory",), dict(dest="profileMemory",
-                                         help="profile memory usage (default is False)",
-                                         action="store_true",
-                                         default=False,
-                                         cmds=['testjs', 'testpy', 'testall'])),
         ]
      ),
     )
