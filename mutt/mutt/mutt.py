@@ -71,8 +71,7 @@ global_options = [
 parser_groups = (
     ("Supported Command-Specific Options", [
         (("-p", "--profiledir",), dict(dest="profiledir",
-                                       help=("profile directory to pass to "
-                                             "app"),
+                                       help="profile directory to pass to app",
                                        metavar=None,
                                        default=None,
                                        cmds=['test', 'testjs', 
@@ -257,22 +256,23 @@ def test_all_python(tests, options):
 
 def test_all_js(tests, options):
     print "Running JS Tests"
-    # We run each test in its own instance since these are harness tests
+    # We run each test in its own instance since these are harness tests.
     # That just seems safer, no opportunity for cross-talk since
-    # We are sorta using the framework to test itself
+    # we are sorta using the framework to test itself
     results = JSResults()
     for t in tests:
+
+        # get CLI arguments to mozmill
         args = []
         if 'restart' in t:
             args.append('--restart')
         if options.binary:
-            args.append('-b')
-            args.append(options.binary)
-        args.append('--console-level=DEBUG')
-        
+            args.extend(['-b', options.binary])
+        args.append('--console-level=DEBUG')        
         args.append('-t')
         args.append(t['path'])
-        
+
+        # run the test
         proc = ProcessHandler("mozmill", args, os.getcwd())
         proc.run()
         status = proc.waitForFinish(timeout=300)
