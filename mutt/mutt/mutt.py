@@ -180,7 +180,7 @@ def parse_args(arguments, global_options, usage, parser_groups, defaults=None):
         parser.print_help()
         parser.exit()
 
-    return (options, args)
+    return (options, args[0]) # args[0] == command
 
 def get_pytests(testdict):
     unittests = []
@@ -211,7 +211,6 @@ def report(fail, pyresults=None, jsresults=None, options=None):
             print "%s\n" % str(i)
     else:
         print "No Python Failures"
-
     print "=" * 75
     if jsresults:
         print "Javascript Failures:"
@@ -242,6 +241,8 @@ def test_all(tests, options):
     except SystemExit, e:
         fail = (e.code != 0) or fail
 
+    # XXX unify this with main function below
+    # return the value vs. exiting here
     sys.exit(report(fail, pyresult, jsresult, options))
 
 def test_all_python(tests, options):
@@ -327,29 +328,30 @@ def run(arguments=sys.argv[1:], defaults=None):
                          parser_groups=parser_groups,
                          usage=usage,
                          defaults=defaults)
-    (options, args) = parse_args(**parser_kwargs)
-    command = args[0]
+    (options, command) = parse_args(**parser_kwargs)
 
-    # Parse the manifests
+    # Parse the manifest
     mp = TestManifest(manifests=(options.manifest,))
 
+    # run + report
     if command == "testpy":
         results = test_all_python(mp.get(tests=mp.active_tests(), type='python'), options)
         if results.failures or results.errors:
             sys.exit(report(True, results, None, options))
         else:
             sys.exit(report(False))
-
+            
     elif command == "testjs":
         results = test_all_js(mp.get(tests=mp.active_tests(), type='javascript'), options)
         if results.failures:
             sys.exit(report(True, None, results, options))
         else:
             sys.exit(report(False))
-  
+            
     elif command == "testall":
         test_all(mp.active_tests(), options)
         return
+    
     else:
         print "Unknown command"
         sys.exit(1)
