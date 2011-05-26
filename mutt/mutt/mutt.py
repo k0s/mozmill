@@ -112,9 +112,7 @@ parser_groups = (
                                        cmds=['test', 'testjs',
                                              'testpy', 'testall'])),
         (("", "--extra-packages",), dict(dest="extra_packages",
-                                         help=("extra packages to include, "
-                                               "comma-separated. Default is "
-                                               "'none'."),
+                                         help="extra packages to include, comma-separated. Default is 'None'.",
                                          metavar=None,
                                          default=None,
                                          cmds=['test', 'testjs',
@@ -153,27 +151,16 @@ parser_groups = (
         # TODO: This should default to true once our memory debugging
         # issues are resolved; see bug 592774.
         (("", "--profile-memory",), dict(dest="profileMemory",
-                                         help=("profile memory usage "
-                                               "(default is false)"),
-                                         type="int",
-                                         action="store",
-                                         default=0,
-                                         cmds=['test', 'testjs', 'testpy',
-                                               'testall'])),
+                                         help="profile memory usage (default is False)",
+                                         action="store_true",
+                                         default=False,
+                                         cmds=['test', 'testjs', 'testpy', 'testall'])),
         ]
      ),
     )
 
 # Maximum time we'll wait for tests to finish, in seconds.
 TEST_RUN_TIMEOUT = 5 * 60
-
-def find_parent_package(cur_dir):
-    tail = True
-    while tail:
-        if os.path.exists(os.path.join(cur_dir, 'package.json')):
-            return cur_dir
-        cur_dir, tail = os.path.split(cur_dir)
-    return None
 
 def check_json(option, opt, value):
     # We return the parsed JSON here; see bug 610816 for background on why.
@@ -222,7 +209,7 @@ def parse_args(arguments, global_options, usage, parser_groups, defaults=None):
 
     (options, args) = parser.parse_args(args=arguments)
 
-    if not args:
+    if len(args) != 1:
         parser.print_help()
         parser.exit()
 
@@ -241,15 +228,15 @@ def get_pytests(testdict):
             unittests.append(test)
     return unittests
 
-def report(fail, pyresults = None, jsresults = None, options = None):
+def report(fail, pyresults=None, jsresults=None, options=None):
     if not fail:
         print "All tests were successful.  Ship it!"
         return 0
 
     # Print the failures
     print "Some tests were unsuccessful."
-    print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-    if (pyresults):
+    print "+" * 75
+    if pyresults:
         print "Python Failures:"
         for i in pyresults.failures:
             print "%s\n" % str(i)
@@ -258,8 +245,8 @@ def report(fail, pyresults = None, jsresults = None, options = None):
     else:
         print "No Python Failures"
 
-    print "=========================================================================="
-    if (jsresults):
+    print "=" * 75
+    if jsresults:
         print "Javascript Failures:"
         for i in jsresults.failures:
             print "%s\n" % str(i)
@@ -294,7 +281,7 @@ def test_all_python(tests, options):
     print "Running python tests" 
     unittestlist = get_pytests(tests)
     verbosity = 1
-    if (options.verbose):
+    if options.verbose:
         verbosity = 2
     suite = unittest.TestSuite(unittestlist)
     runner = unittest.TextTestRunner(verbosity=verbosity)
@@ -324,13 +311,7 @@ def test_all_js(tests, options):
         results.acquire(t['name'], proc.output)
     return results
 
-class JSResults:
-    def __init__(self):
-        self.failures = []
-        self.passes = []
-        self.info = []
-        self.text = {}
-  
+class JSResults(object):
     """
     Takes in a standard output log and marshals it into our
     class in an additive fashion.
@@ -340,6 +321,13 @@ class JSResults:
 
     But I'm thinking this really needs to be swapped out for a real log parser
     """
+
+    def __init__(self):
+        self.failures = []
+        self.passes = []
+        self.info = []
+        self.text = {}
+  
     def acquire(self, testname, buf):
         passre = re.compile("^TEST-PASS.*")
         failre = re.compile("^TEST-UNEXPECTED-FAIL.*")
@@ -363,32 +351,29 @@ class JSResults:
             self.text[testname].append(line)
                 
 
-def run(arguments=sys.argv[1:], target_cfg=None, pkg_cfg=None,
-        defaults=None):
+def run(arguments=sys.argv[1:], defaults=None):
+
+    # parse the command line arguments
     parser_kwargs = dict(arguments=arguments,
                          global_options=global_options,
                          parser_groups=parser_groups,
                          usage=usage,
                          defaults=defaults)
-
     (options, args) = parse_args(**parser_kwargs)
-
     command = args[0]
 
     # Parse the manifests
-    mp = TestManifest()
-    mp.read(options.manifest)
+    mp = TestManifest(manifests=(options.manifest,))
 
     if command == "testpy":
-        results = test_all_python(mp.active_tests(type='python'), options)
+        results = test_all_python(mp.get(tests=mp.active_tests(), type='python'), options)
         if results.failures or results.errors:
             sys.exit(report(True, results, None, options))
         else:
             sys.exit(report(False))
 
-
     elif command == "testjs":
-        results = test_all_js(mp.active_tests(type='javascript'), options)
+        results = test_all_js(mp.get(tests=mp.active_tests(), type='javascript'), options)
         if results.failures:
             sys.exit(report(True, None, results, options))
         else:
@@ -403,4 +388,3 @@ def run(arguments=sys.argv[1:], target_cfg=None, pkg_cfg=None,
 
 if __name__ == '__main__':
     run()
-
