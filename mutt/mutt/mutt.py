@@ -162,20 +162,8 @@ parser_groups = (
 # Maximum time we'll wait for tests to finish, in seconds.
 TEST_RUN_TIMEOUT = 5 * 60
 
-def check_json(option, opt, value):
-    # We return the parsed JSON here; see bug 610816 for background on why.
-    try:
-        return json.loads(value)
-    except ValueError:
-        raise optparse.OptionValueError("Option %s must be JSON." % opt)
-
-class CfxOption(optparse.Option):
-    TYPES = optparse.Option.TYPES + ('json',)
-    TYPE_CHECKER = copy(optparse.Option.TYPE_CHECKER)
-    TYPE_CHECKER['json'] = check_json
-
 def parse_args(arguments, global_options, usage, parser_groups, defaults=None):
-    parser = optparse.OptionParser(usage=usage.strip(), option_class=CfxOption)
+    parser = optparse.OptionParser(usage=usage.strip())
 
     def name_cmp(a, b):
         # a[0]    = name sequence
