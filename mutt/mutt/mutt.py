@@ -53,7 +53,6 @@ Supported Commands:
   test       - run tests
 
 Internal Commands:
-  testcfx    - test the cfx tool
   testjs     - run mozmill js tests
   testpy     - run mozmill python tests
   testall    - test whole environment
@@ -115,12 +114,9 @@ parser_groups = (
                                          help="extra packages to include, comma-separated. Default is 'None'.",
                                          metavar=None,
                                          default=None,
-                                         cmds=['test', 'testjs',
-                                               'testpy', 'testall',
-                                               'testcfx'])),
+                                         cmds=['test', 'testjs', 'testpy', 'testall'])),
         ]
      ),
-
 
     ("Internal Command-Specific Options", [
         (("", "--addons",), dict(dest="addons",
@@ -128,15 +124,7 @@ parser_groups = (
                                        "comma-separated"),
                                  metavar=None,
                                  default=None,
-                                 cmds=['test', 'run', 'testjs', 'testpy',
-                                       'testall'])),
-        (("", "--test-runner-pkg",), dict(dest="test_runner_pkg",
-                                          help=("name of package "
-                                                "containing test runner "
-                                                "program (default is "
-                                                "test-harness)"),
-                                          default="test-harness",
-                                          cmds=['test', 'testjs', 'testpy', 'testall'])),
+                                 cmds=['test', 'run', 'testjs', 'testpy', 'testall'])),
         (("", "--logfile",), dict(dest="logfile",
                                   help="log console output to file",
                                   metavar=None,
