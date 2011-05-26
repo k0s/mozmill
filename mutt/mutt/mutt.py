@@ -163,24 +163,22 @@ parser_groups = (
 TEST_RUN_TIMEOUT = 5 * 60
 
 def parse_args(arguments, global_options, usage, parser_groups, defaults=None):
+
+    # create a parser
     parser = optparse.OptionParser(usage=usage.strip())
 
-    def name_cmp(a, b):
-        # a[0]    = name sequence
-        # a[0][0] = short name (possibly empty string)
-        # a[0][1] = long name
-        names = []
-        for seq in (a, b):
-            names.append(seq[0][0][1:] if seq[0][0] else seq[0][1][2:])
-        return cmp(*names)
 
-    global_options.sort(name_cmp)
+    # sort the options so that they print in a nice order
+    def name_cmp(option):
+        return option[0][-1].lstrip('-')
+    global_options.sort(key=name_cmp)
+
+    # add the options
     for names, opts in global_options:
         parser.add_option(*names, **opts)
-
     for group_name, options in parser_groups:
         group = optparse.OptionGroup(parser, group_name)
-        options.sort(name_cmp)
+        options.sort(key=name_cmp)
         for names, opts in options:
             if 'cmds' in opts:
                 cmds = opts['cmds']
