@@ -100,7 +100,7 @@ global_options = [
 # Maximum time we'll wait for tests to finish, in seconds.
 TEST_RUN_TIMEOUT = 5 * 60
 
-def parse_args(arguments, global_options, usage, defaults=None):
+def parse_args(arguments):
 
     # create a parser
     parser = optparse.OptionParser(usage=usage.strip())
@@ -117,9 +117,14 @@ def parse_args(arguments, global_options, usage, defaults=None):
     (options, args) = parser.parse_args(args=arguments)
 
     # args[0] == command
+    if not len(args):
+        return (options, 'testall')
     if len(args) != 1:
         parser.print_help()
         parser.exit()
+    commands = ('testall', 'testpy', 'testjs')
+    if args[0] not in commands:
+        parser.error("Invalid command: '%s' (Should be one of: %s)" % (args[0], ', '.join(commands)))
     return (options, args[0]) 
 
 def get_pytests(testdict):
@@ -260,13 +265,10 @@ class JSResults(object):
             self.text[testname].append(line)
                 
 
-def run(arguments=sys.argv[1:], defaults=None):
+def run(arguments=sys.argv[1:]):
 
     # parse the command line arguments
-    parser_kwargs = dict(arguments=arguments,
-                         global_options=global_options,
-                         usage=usage,
-                         defaults=defaults)
+    parser_kwargs = dict(arguments=arguments)
     (options, command) = parse_args(**parser_kwargs)
 
     # Parse the manifest
@@ -274,26 +276,22 @@ def run(arguments=sys.argv[1:], defaults=None):
 
     # run + report
     if command == "testpy":
-        results = test_all_python(mp.get(tests=mp.active_tests(), type='python'), options)
+        results = test_all_python(mp.get(tests=mp.active_tests(disabled=False), type='python'), options)
         if results.failures or results.errors:
             sys.exit(report(True, results, None, options))
         else:
             sys.exit(report(False))
             
     elif command == "testjs":
-        results = test_all_js(mp.get(tests=mp.active_tests(), type='javascript'), options)
+        results = test_all_js(mp.get(tests=mp.active_tests(disabled=False), type='javascript'), options)
         if results.failures:
             sys.exit(report(True, None, results, options))
         else:
             sys.exit(report(False))
             
     elif command == "testall":
-        test_all(mp.active_tests(), options)
-        return
-    
-    else:
-        print "Unknown command"
-        sys.exit(1)
+        test_all(mp.active_tests(disabled=False), options)
+
 
 if __name__ == '__main__':
     run()
