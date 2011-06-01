@@ -50,11 +50,15 @@ class PythonCallbacks(object):
         return {'mozmill.firePythonCallback': self.fire }
 
     def fire(self, obj):
-        path = os.path.dirname(obj['test'])
-        path = os.path.join(path, obj['filename'])
-        assert os.path.exists(path)
-        module = imp.load_source('callbacks', path)
-        method = getattr(module, obj['method'])
-        method(*obj.get('args', []), **obj.get('kwargs', {}))
-        
+        try:
+            path = os.path.dirname(obj['test'])
+            path = os.path.join(path, obj['filename'])
+            assert os.path.exists(path), "PythonCallbacks: file does not exist: %s" % obj['filename']
+            module = imp.load_source('callbacks', path)
+            method = getattr(module, obj['method'])
+            method(*obj.get('args', []), **obj.get('kwargs', {}))
+        except BaseException, e:
+            print "YOU HAS SERIOUS EXCEPTION!!!"
+            print e
+            print repr(e)
         
