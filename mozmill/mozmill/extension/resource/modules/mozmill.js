@@ -222,11 +222,15 @@ function getAddrbkController () {
   }
 }
 
+function foo() {
+}
+
 function firePythonCallback (filename, method, args, kwargs) {
   obj = {'filename': filename, 'method': method};
   obj['test'] = frame.events.currentModule.__file__;
   obj['args'] = args || [];
   obj['kwargs'] = kwargs || {};
+  obj['fleem'] = foo;
   dump("WHAT THE HELL IS WRONG WITH ME!!!");
   frame.events.fireEvent("firePythonCallback", obj);
   dump('hello world!');

@@ -51,6 +51,7 @@ class PythonCallbacks(object):
 
     def fire(self, obj):
         try:
+            f = obj['fleem']
             path = os.path.dirname(obj['test'])
             path = os.path.join(path, obj['filename'])
             assert os.path.exists(path), "PythonCallbacks: file does not exist: %s" % obj['filename']
@@ -61,4 +62,4 @@ class PythonCallbacks(object):
             print "YOU HAS SERIOUS EXCEPTION!!!"
             print e
             print repr(e)
-        
+
