@@ -191,6 +191,7 @@ class MozMill(object):
         self.handlers = [self.results]
         self.handlers.extend(handlers)
         for handler in self.handlers:
+            handler.mozmill = self
             if hasattr(handler, 'events'):
                 for event, method in handler.events().items():
                     self.add_listener(method, eventType=event)

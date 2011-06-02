@@ -40,7 +40,10 @@ python callbacks handler for mozmill
 """
 
 import imp
+import jsbridge
 import os
+
+from mozmill import mozmillModuleJs
 
 class PythonCallbacks(object):
 
@@ -51,12 +54,12 @@ class PythonCallbacks(object):
 
     def fire(self, obj):
         try:
-            f = obj['fleem']
+            path = os.path.dirname(obj['test'])
+            path = os.path.join(path, obj['filename'])
+            assert os.path.exists(path), "PythonCallbacks: file does not exist: %s" % obj['filename']
+            module = imp.load_source('callbacks', path)
+            method = getattr(module, obj['method'])
+            method(*obj.get('args', []), **obj.get('kwargs', {}))
         except Exception, e:
             print repr(e)
-        path = os.path.dirname(obj['test'])
-        path = os.path.join(path, obj['filename'])
-        assert os.path.exists(path), "PythonCallbacks: file does not exist: %s" % obj['filename']
-        module = imp.load_source('callbacks', path)
-        method = getattr(module, obj['method'])
-        method(*obj.get('args', []), **obj.get('kwargs', {}))
+            raise

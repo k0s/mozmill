@@ -230,7 +230,6 @@ function firePythonCallback (filename, method, args, kwargs) {
   obj['test'] = frame.events.currentModule.__file__;
   obj['args'] = args || [];
   obj['kwargs'] = kwargs || {};
-  obj['fleem'] = foo;
   frame.events.fireEvent("firePythonCallback", obj);
 }
 
