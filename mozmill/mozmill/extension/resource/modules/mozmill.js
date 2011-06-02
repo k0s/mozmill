@@ -231,9 +231,7 @@ function firePythonCallback (filename, method, args, kwargs) {
   obj['args'] = args || [];
   obj['kwargs'] = kwargs || {};
   obj['fleem'] = foo;
-  dump("WHAT THE HELL IS WRONG WITH ME!!!");
   frame.events.fireEvent("firePythonCallback", obj);
-  dump('hello world!');
 }
 
 function timer (name) {

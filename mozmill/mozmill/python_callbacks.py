@@ -52,14 +52,11 @@ class PythonCallbacks(object):
     def fire(self, obj):
         try:
             f = obj['fleem']
-            path = os.path.dirname(obj['test'])
-            path = os.path.join(path, obj['filename'])
-            assert os.path.exists(path), "PythonCallbacks: file does not exist: %s" % obj['filename']
-            module = imp.load_source('callbacks', path)
-            method = getattr(module, obj['method'])
-            method(*obj.get('args', []), **obj.get('kwargs', {}))
-        except BaseException, e:
-            print "YOU HAS SERIOUS EXCEPTION!!!"
-            print e
+        except Exception, e:
             print repr(e)
-
+        path = os.path.dirname(obj['test'])
+        path = os.path.join(path, obj['filename'])
+        assert os.path.exists(path), "PythonCallbacks: file does not exist: %s" % obj['filename']
+        module = imp.load_source('callbacks', path)
+        method = getattr(module, obj['method'])
+        method(*obj.get('args', []), **obj.get('kwargs', {}))

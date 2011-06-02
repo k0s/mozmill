@@ -190,8 +190,6 @@ class FirefoxProfile(Profile):
                    # Don't open a dialog to show available add-on updates
                    'extensions.update.notifyUser' : False,
 
-                   'browser.dom.window.dump.enabled' : True,
-
                    # Disable addon compatibility checks
                    'extensions.checkCompatibility' : False,
                    'extensions.checkCompatibility.4.0' : False,
