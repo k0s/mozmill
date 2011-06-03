@@ -40,12 +40,10 @@ python callbacks handler for mozmill
 """
 
 import imp
-import jsbridge
 import os
 
-from mozmill import mozmillModuleJs
-
 class PythonCallbacks(object):
+    """fire python callbacks from JS; these are one-way only"""
 
     def __init__(self): pass
 
@@ -60,6 +58,7 @@ class PythonCallbacks(object):
             module = imp.load_source('callbacks', path)
             method = getattr(module, obj['method'])
             method(*obj.get('args', []), **obj.get('kwargs', {}))
-        except Exception, e:
+        except BaseException, e:
+            print "PythonCallbacks error:"
             print repr(e)
             raise
