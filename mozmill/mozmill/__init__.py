@@ -191,7 +191,10 @@ class MozMill(object):
         self.handlers = [self.results]
         self.handlers.extend(handlers)
         for handler in self.handlers:
+
+            # make the mozmill instance available to the handler
             handler.mozmill = self
+            
             if hasattr(handler, 'events'):
                 for event, method in handler.events().items():
                     self.add_listener(method, eventType=event)
@@ -500,7 +503,7 @@ class CLI(mozrunner.CLI):
             def testname(t):
                 realpath = os.path.realpath(testpath)
                 if os.path.isdir(realpath):
-                    return os.path.relpath(t, testpath)
+                    return os.path.join(test, os.path.relpath(t, testpath))
                 return test
             tests = [{'name': testname(t), 'path': t}
                      for t in collect_tests(testpath)]
