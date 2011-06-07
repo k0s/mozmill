@@ -42,9 +42,9 @@ import socket
 import sys
 import traceback
 try:
-  import json
+    import json
 except:
-  import simplejson as json
+    import simplejson as json
 
 import jsbridge
 import manifestparser
@@ -191,6 +191,7 @@ class MozMill(object):
         self.handlers = [self.results]
         self.handlers.extend(handlers)
         for handler in self.handlers:
+            handler.mozmill = self
             if hasattr(handler, 'events'):
                 for event, method in handler.events().items():
                     self.add_listener(method, eventType=event)
@@ -491,13 +492,18 @@ class CLI(mozrunner.CLI):
 
         # expand user directory and check existence for the test
         for test in self.options.tests:
-            test = os.path.expanduser(test)
-            if not os.path.exists(test):
-                raise Exception("Not a valid test file/directory: %s" % test)
+            testpath = os.path.expanduser(test)
+            if not os.path.exists(testpath):
+                raise Exception("Not a valid test file/directory: %s" % testpath)
 
             # collect the tests
-            tests = [{'test': os.path.basename(t), 'path': t}
-                     for t in collect_tests(test)]
+            def testname(t):
+                realpath = os.path.realpath(testpath)
+                if os.path.isdir(realpath):
+                    return os.path.relpath(t, testpath)
+                return test
+            tests = [{'name': testname(t), 'path': t}
+                     for t in collect_tests(testpath)]
             self.manifest.tests.extend(tests)
 
         # list the tests and exit if specified
