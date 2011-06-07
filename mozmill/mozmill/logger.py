@@ -165,13 +165,13 @@ class LoggerListener(object):
   ### event listeners
 
   def startTest(self, test):
-    self.logger.log(self.custom_levels["TEST-START"], "%s | %s" % (test['filename'], test['name']))
+    self.logger.log(self.custom_levels["TEST-START"], "%s | %s" % (self.mozmill.running_test['name'], test['name']))
 
   def endTest(self, test):
     if test.get('skipped', False):
       self.logger.warning("%s | (SKIP) %s" % (test['name'], test.get('skipped_reason', '')))
     elif test['failed'] > 0:
-      self.logger.log(self.custom_levels["TEST-UNEXPECTED-FAIL"], "%s | %s" % (test['filename'], test['name']))
+      self.logger.log(self.custom_levels["TEST-UNEXPECTED-FAIL"], "%s | %s" % (self.mozmill.running_test['name'], test['name']))
     else:
       self.logger.log(self.custom_levels["TEST-PASS"], "%s | %s" % (test['filename'], test['name']))
 
@@ -214,8 +214,3 @@ class ColorFormatter(logging.Formatter):
       levelname_color = self.COLOR_SEQ % fore_color + levelname + self.RESET_SEQ
       record.levelname = levelname_color
     return logging.Formatter.format(self, record)
-
-    
-
-
-    

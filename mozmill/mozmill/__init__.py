@@ -326,7 +326,7 @@ class MozMill(object):
         # run tests
         while tests:
             test = tests.pop(0)
-            
+            self.running_test = test
             if 'disabled' in test: # skip test
 
                 # see frame.js:events.endTest
