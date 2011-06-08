@@ -166,7 +166,7 @@ class LoggerListener(object):
 
   def startTest(self, test):
     filename = self.mozmill.running_test.get('name', test['filename'])
-    self.logger.log(self.custom_levels["TEST-START"], "%s | %s" % (name, test['name']))
+    self.logger.log(self.custom_levels["TEST-START"], "%s | %s" % (filename, test['name']))
 
   def endTest(self, test):
     filename = self.mozmill.running_test.get('name', test['filename'])
@@ -175,7 +175,7 @@ class LoggerListener(object):
     elif test['failed'] > 0:
       self.logger.log(self.custom_levels["TEST-UNEXPECTED-FAIL"], "%s | %s" % (name, test['name']))
     else:
-      self.logger.log(self.custom_levels["TEST-PASS"], "%s | %s" % (name, test['name']))
+      self.logger.log(self.custom_levels["TEST-PASS"], "%s | %s" % (filename, test['name']))
 
 
 class ColorFormatter(logging.Formatter):
