@@ -31,6 +31,7 @@ class LoggerListener(object):
     self.custom_levels = {
      "TEST-START" : 21, # logging.INFO is 20
      "TEST-PASS": 22,
+     "TEST-EXPECTED-FAIL": 23,
      "TEST-UNEXPECTED-FAIL": 42,  # logging.ERROR is 40
     }
     for name in self.custom_levels:
@@ -86,7 +87,7 @@ class LoggerListener(object):
 
   @classmethod
   def add_options(cls, parser):                      
-    LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR", "FATAL")
+    LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "FAIL", "ERROR", "FATAL")
     LEVEL_STRING = "[" + "|".join(LOG_LEVELS) + "]"
 
     parser.add_option("-l", "--log-file", dest="log_file", default=None,
@@ -171,7 +172,10 @@ class LoggerListener(object):
     if test.get('skipped', False):
       self.logger.warning("%s | (SKIP) %s" % (test['name'], test.get('skipped_reason', '')))
     elif test['failed'] > 0:
-      self.logger.log(self.custom_levels["TEST-UNEXPECTED-FAIL"], "%s | %s" % (test['filename'], test['name']))
+      level = "TEST-UNEXPECTED-FAIL"
+      if self.mozmill.running_test.get('expected') == 'fail':
+        level = "TEST-EXPECTED-FAIL"
+      self.logger.log(self.custom_levels[level], "%s | %s" % (test['filename'], test['name']))
     else:
       self.logger.log(self.custom_levels["TEST-PASS"], "%s | %s" % (test['filename'], test['name']))
 

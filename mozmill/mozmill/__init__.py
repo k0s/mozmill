@@ -111,7 +111,6 @@ class TestResults(object):
         if test.get('skipped', False):
             self.skipped.append(test)
         elif test['failed'] > 0:
-            print self.mozmill.running_test
             if self.mozmill.running_test.get('expected') == 'fail':
                 self.passes.append(test)
             else:
