@@ -45,50 +45,99 @@ from optparse import OptionParser
 from profile import Profile
 from addons import AddonManager
 
-def cli(argv=sys.argv[1:]):
-    usage = "%prog [options]"
-    parser = OptionParser(usage=usage, description=__doc__)
+def cast_pref(value):
+    """
+    interpolate preferences from strings
+    from the command line or from e.g. an .ini file, there is no good way to denote
+    what type the preference value is, as natively it is a string
+    - integers will get cast to integers
+    - true/false will get cast to True/False
+    - anything enclosed in single quotes will be treated as a string with the ''s removed from both sides
+    """
 
-    parser.add_option("-p", "--profile", dest="profile",
-                        help="The profile to operate on. " +
-                             "If none, creates a new profile in temp directory")
-    parser.add_option("-a", "--addon", dest="addons",
-                        action="append",
-                        help="An addon to install. " + 
-                             "Can be a filepath, a directory containing addons, or a url")
-    parser.add_option("-m", "--addon-manifests", dest="manifests",
-                        action="append",
-                        help="An addon manifest to install")
-    parser.add_option("--pref", dest="prefs",
-                        action='append',
-                        default=[],
-                        help="A string preference to set. " +
-                             "Must be a key-value pair separated by a ':'")
-    parser.add_option("--print-addon-ids", dest="print_addons",
-                        help="A list of addon filepaths. " +
-                             "Prints the id of each addon and exits")
-    opt, args = parser.parse_args(argv)
-    
-    if opt.print_addons:
+    quote = "'"
+    if value == 'true':
+        return  True
+    if value == 'false':
+        return False
+    try:
+        return int(value)
+    except ValueError:
+        pass
+    if value.startswith(quote) and value.endswith(quote):
+        value = value[1:-1]
+    return value
+
+
+class CLIMixin(object):
+
+    module = 'mozprofile'
+
+    def __init__(self, args=sys.argv[1:]):
+        self.parser = OptionParser(description=__doc__)
+        self.add_options(self.parser)
+        (self.options, self.args) = self.parser.parse_args(args)
+
+        # change preferences into 2-tuples
+        separator = ':'
+        for i in range(len(self.options.prefs)):
+            if separator not in self.options.prefs[i]:
+                self.parser.error("preference must be a key-value pair separated by a ':'")
+            self.options.prefs[i] = self.options.prefs[i].split(separator, 1)
+            
+
+    def add_options(self, parser):
+        parser.add_option("-p", "--profile", dest="profile",
+                          help="The profile to operate on. If none, creates a new profile in temp directory")
+        parser.add_option("-a", "--addon", dest="addons",
+                          action="append",
+                          help="An addon to install. Can be a filepath, a directory containing addons, or a url")
+        parser.add_option("-m", "--addon-manifests", dest="manifests",
+                          action="append",
+                          help="An addon manifest to install")
+        parser.add_option("--pref", dest="prefs",
+                          action='append', default=[],
+                          help="A string preference to set. Must be a key-value pair separated by a ':'")
+
+    def preferences(self):
+        """profile preferences"""
+        prefs = self.options.prefs[:]
+
+        # string preferences
+        prefs = [(i, cast_pref(j)) for i, j in prefs]
+
+        return prefs
+
+class MozProfileCLI(CLIMixin):
+
+    def add_options(self, parser):
+        CLIMixin.add_options(parser)
+        parser.add_option("--print-addon-ids", dest="print_addons",
+                          help="A list of addon filepaths. Prints the id of each addon and exits")
+        parser.add_option("-D", "--debug", dest="debug",
+                          action="store_true", default=False,
+                          help="debug mode")
+
+def cli(args=sys.argv[1:]):
+
+    # process the command line
+    cli = MozProfileCLI(args)
+
+    # print the addons if requested
+    if cli.options.print_addons:
         for arg in opt.print_addons:
             print AddonManager.get_addon_id(arg)
-        return True
+        return
    
-    # The profile class calls dict.update() which can accept an iterable of iterables of length two
-    for i in range(len(opt.prefs)):
-        if ':' not in opt.prefs[i]:
-            parser.error("preference must be a key-value pair separated by a ':'")
-        opt.prefs[i] = opt.prefs[i].split(':', 1)
-
-    if opt.addons or opt.manifests:
-        # Some sort of user feedback is needed when installing addons
-        # since it can potentially take a long time to finish
-        print "Installing addons..."
-
+    # create the profile
+    if cli.options.debug:
+        print "Creating profile..."
     profile = Profile(profile=opt.profile, addons=opt.addons,
                       addon_manifests=opt.manifests, preferences=opt.prefs, restore=False)
     
     # if no profile was passed in print the newly created profile
-    if not opt.profile:
+    if not cli.options.profile:
         print profile.profile 
-    return True
+
+if __name__ == '__main__':
+    cli()
