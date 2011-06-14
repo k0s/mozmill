@@ -111,7 +111,7 @@ class CLIMixin(object):
 class MozProfileCLI(CLIMixin):
 
     def add_options(self, parser):
-        CLIMixin.add_options(parser)
+        CLIMixin.add_options(self, parser)
         parser.add_option("--print-addon-ids", dest="print_addons",
                           help="A list of addon filepaths. Prints the id of each addon and exits")
         parser.add_option("-D", "--debug", dest="debug",
@@ -128,12 +128,15 @@ def cli(args=sys.argv[1:]):
         for arg in opt.print_addons:
             print AddonManager.get_addon_id(arg)
         return
+
+    # get the preferences
+    preferences = cli.preferences()
    
     # create the profile
     if cli.options.debug:
         print "Creating profile..."
-    profile = Profile(profile=opt.profile, addons=opt.addons,
-                      addon_manifests=opt.manifests, preferences=opt.prefs, restore=False)
+    profile = Profile(profile=cli.options.profile, addons=cli.options.addons,
+                      addon_manifests=cli.options.manifests, preferences=preferences, restore=False)
     
     # if no profile was passed in print the newly created profile
     if not cli.options.profile:
