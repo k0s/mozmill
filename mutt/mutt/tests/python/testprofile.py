@@ -41,7 +41,7 @@ class ProfileTest(unittest.TestCase):
 
     def test_basic_prefs(self):
         _prefs = {"browser.startup.homepage": "http://planet.mozilla.org/"}
-        
+        self.compare_generated(_prefs)
 
 if __name__ == '__main__':
     unittest.main()
