@@ -28,7 +28,7 @@ class Preferences(object):
         """
         # wants a list of 2-tuples
         if isinstance(prefs, dict):
-            prefs = dict.items()
+            prefs = prefs.items()
         if cast:
             prefs = [(i, self.cast(j)) for i, j in prefs]
         self._prefs += prefs
@@ -107,7 +107,7 @@ class Preferences(object):
         if section:
             if section not in parser.sections():
                 raise PreferencesReadError("No section '%s' in %s" % (section, path))
-            import pdb; pdb.set_trace()
+            retval = parser.items(section, raw=True)
         else:
             retval = parser.defaults().items()
 
@@ -117,6 +117,7 @@ class Preferences(object):
     @classmethod
     def read_json(cls, path):
         prefs = json.loads(file(path).read())
+
         if type(prefs) not in [list, dict]:
             raise PreferencesReadError("Malformed preferences: %s" % path)
         if isinstance(prefs, list):
@@ -130,7 +131,8 @@ class Preferences(object):
         types = (bool, basestring, int)
         if [i for i in values
             if not [isinstance(i, j) for j in types]]:
-            pass
+            raise PreferencesReadError("Only bool, string, and int values allowed")
+        return prefs
 
 if __name__ == '__main__':
     pass

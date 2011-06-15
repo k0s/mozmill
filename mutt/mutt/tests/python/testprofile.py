@@ -37,31 +37,53 @@ class ProfileTest(unittest.TestCase):
         self.assertEqual(_prefs, read)
         shutil.rmtree(profile)
 
-    def test_ini(self):
-        _ini = """[DEFAULT]
-browser.startup.homepage = http://planet.mozilla.org/
-
-[foo]
-browser.startup.homepage = http://github.com/
-"""
-
-        fd, name = tempfile.mkstemp(suffix='.ini')
-        os.write(fd, _ini)
-        os.close(fd)
-        commandline = ["mozprofile", "--preferences", name]
-
-        _prefs = {'browser.startup.homepage': 'http://planet.mozilla.org/'}
-        self.compare_generated(_prefs, commandline)
-
-        # cleanup
-        os.remove(name)
-
     def test_basic_prefs(self):
         _prefs = {"browser.startup.homepage": "http://planet.mozilla.org/"}
         commandline = ["mozprofile"]
         for pref, value in _prefs.items():
             commandline += ["--pref", "%s:%s" % (pref, value)]
         self.compare_generated(_prefs, commandline)
+
+    def test_ini(self):
+
+        # write the .ini file
+        _ini = """[DEFAULT]
+browser.startup.homepage = http://planet.mozilla.org/
+
+[foo]
+browser.startup.homepage = http://github.com/
+"""
+        fd, name = tempfile.mkstemp(suffix='.ini')
+        os.write(fd, _ini)
+        os.close(fd)
+        commandline = ["mozprofile", "--preferences", name]
+
+        # test the [DEFAULT] section
+        _prefs = {'browser.startup.homepage': 'http://planet.mozilla.org/'}
+        self.compare_generated(_prefs, commandline)
+
+        # test a specific section
+        _prefs = {'browser.startup.homepage': 'http://github.com/'}
+        commandline[-1] = commandline[-1] + ':foo'
+        self.compare_generated(_prefs, commandline)
+
+        # cleanup
+        os.remove(name)
+
+    def test_json(self):
+        _prefs = {"browser.startup.homepage": "http://planet.mozilla.org/"}
+        json = '{"browser.startup.homepage": "http://planet.mozilla.org/"}'
+
+        # just repr it...could use the json module but we don't need it here
+        fd, name = tempfile.mkstemp(suffix='.json')
+        os.write(fd, json)
+        os.close(fd)
+
+        print name
+
+        commandline = ["mozprofile", "--preferences", name]
+        self.compare_generated(_prefs, commandline)
+
 
 if __name__ == '__main__':
     unittest.main()
