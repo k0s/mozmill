@@ -115,7 +115,8 @@ class MozProfileCLI(CLIMixin):
 
     def add_options(self, parser):
         CLIMixin.add_options(self, parser)
-        parser.add_option("--print-addon-ids", dest="print_addons",
+        parser.add_option("--print-addon-id", dest="print_addons",
+                          action='append', default=[],
                           help="A list of addon filepaths. Prints the id of each addon and exits")
         parser.add_option("-D", "--debug", dest="debug",
                           action="store_true", default=False,
