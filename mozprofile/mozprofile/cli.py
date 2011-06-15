@@ -85,7 +85,7 @@ class CLIMixin(object):
         parser.add_option("-p", "--profile", dest="profile",
                           help="The profile to operate on. If none, creates a new profile in temp directory")
         parser.add_option("-a", "--addon", dest="addons",
-                          action="append",
+                          action="append", default=[],
                           help="Addon paths to install. Can be a filepath, a directory containing addons, or a url")
         parser.add_option("--addon-manifests", dest="manifests",
                           action="append",
