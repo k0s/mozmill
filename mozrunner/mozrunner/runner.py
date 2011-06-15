@@ -342,7 +342,8 @@ class CLI(CLIMixin):
                               help="Print module information")
 
 
-    ### methods regarding introspecting data            
+    ### methods for introspecting data
+
     def get_metadata_from_egg(self):
         import pkg_resources
         ret = {}
