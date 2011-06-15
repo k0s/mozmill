@@ -93,6 +93,10 @@ class CLIMixin(object):
         parser.add_option("--pref", dest="prefs",
                           action='append', default=[],
                           help="A string preference to set. Must be a key-value pair separated by a ':'")
+        parser.add_option("--preferences", dest="prefs_files",
+                          action='append', default=[],
+                          metavar="FILE",
+                          help="read preferences from a JSON or INI file. For INI, use 'file.ini:section' to specify a particular section.")
 
     def profile_args(self):
         """arguments to instantiate the profile class"""
