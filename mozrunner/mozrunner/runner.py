@@ -363,11 +363,7 @@ class CLI(CLIMixin):
                 print key + ": " + self.metadata[key]
 
     ### methods for running
-    def profile_args(self):
-        """arguments to instantiate the profile class"""
-        return dict(profile=self.options.profile,
-                    addons=self.options.addons)
-
+                
     def command_args(self):
         """additional arguments for the mozilla application"""
         return self.options.appArgs

@@ -94,6 +94,13 @@ class CLIMixin(object):
                           action='append', default=[],
                           help="A string preference to set. Must be a key-value pair separated by a ':'")
 
+    def profile_args(self):
+        """arguments to instantiate the profile class"""
+        return dict(profile=self.options.profile,
+                    addons=self.options.addons,
+                    addon_manifests=self.options.manifests,
+                    preferences=self.preferences())
+
     def preferences(self):
         """profile preferences"""
         prefs = self.options.prefs[:]
@@ -132,15 +139,13 @@ def cli(args=sys.argv[1:]):
         for arg in opt.print_addons:
             print AddonManager.get_addon_id(arg)
         return
-
-    # get the preferences
-    preferences = cli.preferences()
    
     # create the profile
     if cli.options.debug:
         print "Creating profile..."
-    profile = Profile(profile=cli.options.profile, addons=cli.options.addons,
-                      addon_manifests=cli.options.manifests, preferences=preferences, restore=False)
+    kwargs = cli.profile_args()
+    kwargs['restore'] = False
+    profile = Profile(**kwargs)
     
     # if no profile was passed in print the newly created profile
     if not cli.options.profile:
