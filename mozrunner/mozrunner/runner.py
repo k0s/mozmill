@@ -289,7 +289,7 @@ class ThunderbirdRunner(Runner):
 runners = {'firefox': FirefoxRunner,
            'thunderbird': ThunderbirdRunner}
 
-class CLI(object):
+class CLI(CLIMixin):
     """Command line interface."""
 
     module = "mozrunner"
@@ -324,16 +324,13 @@ class CLI(object):
     def add_options(self, parser):
         """add options to the parser"""
 
+        # add profile options
+        CLIMixin.add_options(self, parser)
+        
+        # add runner options
         parser.add_option('-b', "--binary",
                           dest="binary", help="Binary path.",
-                          metavar=None, default=None)        
-        parser.add_option('-p', "--profile",
-                         dest="profile", help="Profile path.",
-                         metavar=None, default=None)
-        parser.add_option('-a', "--addon", dest="addons",
-                         action='append',
-                         help="Addons paths to install",
-                         metavar=None, default=[])
+                          metavar=None, default=None)
         parser.add_option('--app', dest='app', default='firefox',
                           help="Application to use [DEFAULT: %default]")
         parser.add_option('--app-arg', dest='appArgs',

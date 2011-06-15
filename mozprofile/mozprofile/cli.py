@@ -45,6 +45,8 @@ from optparse import OptionParser
 from profile import Profile
 from addons import AddonManager
 
+__all__ = ['cast_pref', 'CLIMixin', 'MozProfileCLI']
+
 def cast_pref(value):
     """
     interpolate preferences from strings
@@ -76,23 +78,16 @@ class CLIMixin(object):
     def __init__(self, args=sys.argv[1:]):
         self.parser = OptionParser(description=__doc__)
         self.add_options(self.parser)
-        (self.options, self.args) = self.parser.parse_args(args)
-
-        # change preferences into 2-tuples
-        separator = ':'
-        for i in range(len(self.options.prefs)):
-            if separator not in self.options.prefs[i]:
-                self.parser.error("preference must be a key-value pair separated by a ':'")
-            self.options.prefs[i] = self.options.prefs[i].split(separator, 1)
-            
+        (self.options, self.args) = self.parser.parse_args(args)            
 
     def add_options(self, parser):
+        
         parser.add_option("-p", "--profile", dest="profile",
                           help="The profile to operate on. If none, creates a new profile in temp directory")
         parser.add_option("-a", "--addon", dest="addons",
                           action="append",
-                          help="An addon to install. Can be a filepath, a directory containing addons, or a url")
-        parser.add_option("-m", "--addon-manifests", dest="manifests",
+                          help="Addon paths to install. Can be a filepath, a directory containing addons, or a url")
+        parser.add_option("--addon-manifests", dest="manifests",
                           action="append",
                           help="An addon manifest to install")
         parser.add_option("--pref", dest="prefs",
@@ -103,12 +98,20 @@ class CLIMixin(object):
         """profile preferences"""
         prefs = self.options.prefs[:]
 
+        # change preferences into 2-tuples
+        separator = ':'
+        for pref in self.options.prefs:
+            if separator not in pref:
+                self.parser.error("Preference must be a key-value pair separated by a ':' (You gave: %s)" % pref)
+            prefs.append(pref.split(separator, 1))
+
         # string preferences
         prefs = [(i, cast_pref(j)) for i, j in prefs]
 
         return prefs
 
 class MozProfileCLI(CLIMixin):
+    """mozprofile specific command line interface"""
 
     def add_options(self, parser):
         CLIMixin.add_options(self, parser)
