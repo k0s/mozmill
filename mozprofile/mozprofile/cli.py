@@ -44,31 +44,9 @@ import sys
 from optparse import OptionParser
 from profile import Profile
 from addons import AddonManager
+from prefs import Preferences
 
-__all__ = ['cast_pref', 'CLIMixin', 'MozProfileCLI', 'cli']
-
-def cast_pref(value):
-    """
-    interpolate preferences from strings
-    from the command line or from e.g. an .ini file, there is no good way to denote
-    what type the preference value is, as natively it is a string
-    - integers will get cast to integers
-    - true/false will get cast to True/False
-    - anything enclosed in single quotes will be treated as a string with the ''s removed from both sides
-    """
-
-    quote = "'"
-    if value == 'true':
-        return  True
-    if value == 'false':
-        return False
-    try:
-        return int(value)
-    except ValueError:
-        pass
-    if value.startswith(quote) and value.endswith(quote):
-        value = value[1:-1]
-    return value
+__all__ = ['CLIMixin', 'MozProfileCLI', 'cli']
 
 
 class CLIMixin(object):
@@ -108,19 +86,25 @@ class CLIMixin(object):
     def preferences(self):
         """profile preferences"""
 
-        prefs = []
+        # object to hold preferences
+        prefs = Preferences()
 
-        # change preferences into 2-tuples
+        # add preferences files
+        for prefs_file in self.options.prefs_files:
+            prefs.add_file(prefs_file)
+
+        # change CLI preferences into 2-tuples
         separator = ':'
+        cli_prefs = []
         for pref in self.options.prefs:
             if separator not in pref:
                 self.parser.error("Preference must be a key-value pair separated by a ':' (You gave: %s)" % pref)
-            prefs.append(pref.split(separator, 1))
+            cli_prefs.append(pref.split(separator, 1))
 
         # string preferences
-        prefs = [(i, cast_pref(j)) for i, j in prefs]
+        prefs.add(cli_prefs, cast=True)
 
-        return prefs
+        return prefs()
 
 class MozProfileCLI(CLIMixin):
     """mozprofile specific command line interface"""
