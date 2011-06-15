@@ -45,7 +45,7 @@ from optparse import OptionParser
 from profile import Profile
 from addons import AddonManager
 
-__all__ = ['cast_pref', 'CLIMixin', 'MozProfileCLI']
+__all__ = ['cast_pref', 'CLIMixin', 'MozProfileCLI', 'cli']
 
 def cast_pref(value):
     """
