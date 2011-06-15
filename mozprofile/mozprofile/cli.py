@@ -103,7 +103,8 @@ class CLIMixin(object):
 
     def preferences(self):
         """profile preferences"""
-        prefs = self.options.prefs[:]
+
+        prefs = []
 
         # change preferences into 2-tuples
         separator = ':'
