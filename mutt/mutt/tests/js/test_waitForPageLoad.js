@@ -10,9 +10,9 @@ const LOCATIONS = [
   // Error pages
  {url : "https://mur.at", type: "id", value : "cert_domain_link"},
  {url : "http://www.mozilla.com/firefox/its-a-trap.html", type: "id", value : "ignoreWarningButton"},
- //{url : "https://mozilla.org/", type: "id", value : "getMeOutOfHereButton"}
 ];
-var setupTest = function() {
+
+var setupModule = function() {
   controller = mozmill.getBrowserController();
 }
 

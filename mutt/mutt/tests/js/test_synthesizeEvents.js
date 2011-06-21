@@ -1,4 +1,4 @@
-var setupTest = function() {
+var setupModule = function(module) {
   controller = mozmill.getBrowserController();
 }
 
@@ -47,4 +47,3 @@ var testExpectedEvent = function() {
     throw new Error("Missing event type should cause a failure.")
   }
 }
-

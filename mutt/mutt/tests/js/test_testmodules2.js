@@ -18,7 +18,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *   Clint Talbert <cmtalbert@gmail.com
+ *   Clint Talbert <cmtalbert@gmail.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -39,17 +39,9 @@ var setupModule = function(module) {
   assert.fail("SetupModule passes");
 }
 
-var setupTest = function(module) {
-  expect.pass("SetupTest fails - tests will be skipped");
-}
-
 var testTestStep = function() {
   assert.pass("test Passes");
   controller.open("http://www.mozilla.org");
-}
-
-var teardownTest = function () {
-  assert.pass("teardownTest passes");
 }
 
 var teardownModule = function() {
