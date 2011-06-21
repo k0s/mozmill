@@ -398,7 +398,7 @@ Collector.prototype.initTestModule = function (filename, name) {
   for (var i in test_module) {
     if (typeof(test_module[i]) == "function") {
       test_module[i].__name__ = i;
-      } else if (i == "setupModule") {
+      if (i == "setupModule") {
         test_module.__setupModule__ = test_module[i];
       } else if (i == "teardownModule") {
         test_module.__teardownModule__ = test_module[i];
