@@ -395,6 +395,8 @@ class MozMill(object):
                    'platform_buildid': str(appInfo.platformBuildID),
                    'platform_version': str(appInfo.platformVersion),
                   }
+        startupInfo = mozmill.startupInfo
+        import pdb; pdb.set_trace()
         results['addons'] = json.loads(mozmill.addons)
         results.update(self.runner.get_repositoryInfo())
         return results

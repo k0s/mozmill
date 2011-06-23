@@ -42,8 +42,7 @@ var EXPORTED_SYMBOLS = ["controller", "utils", "elementslib", "os",
                         "newMail3PaneController", "getMail3PaneController", 
                         "wm", "platform", "getAddrbkController", 
                         "getMsgComposeController", "getDownloadsController",
-                        "Application",
-                        "cleanQuit",
+                        "Application", "cleanQuit",
                         "getPlacesController", 'isMac', 'isLinux', 'isWindows',
                         "firePythonCallback"
                        ];
@@ -79,6 +78,13 @@ var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
            
 var appInfo = Components.classes["@mozilla.org/xre/app-info;1"]
                .getService(Components.interfaces.nsIXULAppInfo);
+
+//var startupInfo = Components.classes["@mozilla.org/toolkit/app-startup;1"]
+//                  .getService(Ci.nsIAppStartup_MOZILLA_2_0).getStartupInfo();
+
+var startupInfo = Components.classes["@mozilla.org/toolkit/app-startup;1"]
+    .getService(Components.interfaces.nsIAppStartup).getStartupInfo();
+
 
 var locale = Components.classes["@mozilla.org/chrome/chrome-registry;1"]
                .getService(Components.interfaces.nsIXULChromeRegistry)
