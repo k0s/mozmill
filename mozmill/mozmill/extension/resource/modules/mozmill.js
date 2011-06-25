@@ -82,9 +82,13 @@ var appInfo = Components.classes["@mozilla.org/xre/app-info;1"]
 //var startupInfo = Components.classes["@mozilla.org/toolkit/app-startup;1"]
 //                  .getService(Ci.nsIAppStartup_MOZILLA_2_0).getStartupInfo();
 
-var startupInfo = Components.classes["@mozilla.org/toolkit/app-startup;1"]
+var _startupInfo = Components.classes["@mozilla.org/toolkit/app-startup;1"]
     .getService(Components.interfaces.nsIAppStartup).getStartupInfo();
 
+var startupInfo = {};
+for (var i in _startupInfo) {
+    startupInfo[i] = _startupInfo[i].getTime(); // convert from date object to ms since epoch
+}
 
 var locale = Components.classes["@mozilla.org/chrome/chrome-registry;1"]
                .getService(Components.interfaces.nsIXULChromeRegistry)
