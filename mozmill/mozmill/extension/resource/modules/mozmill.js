@@ -102,6 +102,7 @@ if (Application == undefined) {
 }
 
 // get startup time if available
+// see http://blog.mozilla.com/tglek/2011/04/26/measuring-startup-speed-correctly/
 var startupInfo = {};
 try {
     var _startupInfo = Components.classes["@mozilla.org/toolkit/app-startup;1"]
