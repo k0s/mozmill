@@ -108,7 +108,7 @@ try {
     var _startupInfo = Components.classes["@mozilla.org/toolkit/app-startup;1"]
         .getService(Components.interfaces.nsIAppStartup).getStartupInfo();
     for (var i in _startupInfo) {
-        startupInfo[i] = _startupInfo[i].getTime(); // convert from date object to ms since epoch
+        startupInfo[i] = _startupInfo[i].getTime(); // convert from Date object to ms since epoch
     }
 } catch(e) {
     startupInfo = null; 
