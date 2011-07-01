@@ -69,10 +69,16 @@ class Profile(object):
 
         # set preferences from class preferences
         if hasattr(self.__class__, 'preferences'):
-            self.preferences = self.__class__.preferences.copy()
+            self.preferences = self.__class__.preferences.items()
         else:
-            self.preferences = {}
-        self.preferences.update(preferences or {})
+            self.preferences = []
+        if preferences:
+            if isinstance(preferences, dict):
+                # unordered
+                preferences = preferences.items()
+            assert not [i for i in preferences
+                        if len(i) != 2]
+            self.preferences.extend(preferences)
         self.set_preferences(self.preferences)
  
         # handle addon installation
@@ -110,15 +116,18 @@ class Profile(object):
         else:
             f = open(prefs_file, 'w')
 
-        f.write('\n#MozRunner Prefs Start\n')
+        if isinstance(preferences, dict):
+            # order doesn't matter
+            preferences = preferences.items()
 
-        pref_lines = ['user_pref(%s, %s);' %
-                      (simplejson.dumps(k), simplejson.dumps(v) ) for k, v in
-                       preferences.items()]
-        for line in pref_lines:
-            f.write(line+'\n')
-        f.write('#MozRunner Prefs End\n')
-        f.flush() ; f.close()
+        if preferences:
+            f.write('\n#MozRunner Prefs Start\n')
+            _prefs = [(simplejson.dumps(k), simplejson.dumps(v) )
+                      for k, v in preferences]
+            for _pref in _prefs:
+                f.write('user_pref(%s, %s);\n' % _pref)
+            f.write('#MozRunner Prefs End\n')
+        f.close()
 
     def clean_preferences(self):
         """Removed preferences added by mozrunner."""

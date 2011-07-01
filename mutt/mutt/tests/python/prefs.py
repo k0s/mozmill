@@ -4,7 +4,6 @@ comment = re.compile('/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/', re.MULTILINE)
 def read(filename):
     token = '##//' # magical token
     lines = [i.strip() for i in file(filename).readlines() if i.strip()]
-    retval = {}
     _lines = []
     for line in lines:
         if line.startswith('#'):
@@ -14,8 +13,10 @@ def read(filename):
         _lines.append(line)
     string = '\n'.join(_lines)
     string = re.sub(comment, '', string)
+
+    retval = []
     def pref(a, b):
-        retval[a] = b
+        retval.append((a, b))
     lines = [i.strip().rstrip(';') for i in string.split('\n') if i.strip()]
     for line in lines:
         try:
@@ -23,10 +24,11 @@ def read(filename):
             eval(line, _globals, {})
         except SyntaxError:
             print line
-            import pdb; pdb.set_trace()
-    for key in retval:
-        if isinstance(retval[key], basestring) and token in retval[key]:
-            retval[key] = retval[key].replace(token, '//')
+            raise
+    
+    for index, (key, value) in enumerate(retval):
+        if isinstance(value, basestring) and token in value:
+            retval[index] = (key, value.replace(token, '//'))
     return retval
 
 def write(filename, prefs, pref_string='user_pref("%s", %s);'):
@@ -35,7 +37,7 @@ def write(filename, prefs, pref_string='user_pref("%s", %s);'):
         if value is True:
             print >> f, pref_string % (key, 'true')
         elif value is False:
-            print >> f, pref_string % (key, 'true')
+            print >> f, pref_string % (key, 'false')
         elif isinstance(value, basestring):
             print >> f, pref_string % (key, repr(string(value)))
         else:

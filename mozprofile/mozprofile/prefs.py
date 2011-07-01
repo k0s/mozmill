@@ -38,7 +38,7 @@ class Preferences(object):
         self.add(self.read(path))
 
     def __call__(self):
-        return dict(self._prefs)
+        return self._prefs
 
     @classmethod
     def cast(cls, value):
@@ -51,6 +51,8 @@ class Preferences(object):
         - anything enclosed in single quotes will be treated as a string with the ''s removed from both sides
         """
 
+        if not isinstance(value, basestring):
+            return value # no op
         quote = "'"
         if value == 'true':
             return  True
