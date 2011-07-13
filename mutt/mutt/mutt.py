@@ -258,7 +258,6 @@ class JSResults(object):
             else:
                 self.info.append(line)
             self.text[testname].append(line)
-
         
 
 def run(arguments=sys.argv[1:]):
