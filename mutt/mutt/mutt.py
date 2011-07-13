@@ -206,6 +206,7 @@ def test_all_js(tests, options):
         proc.run()
         status = proc.waitForFinish(timeout=300)
         results.acquire(t['name'], proc.output)
+        import pdb; pdb.set_trace()
 
         # remove the temporary manifest
         os.remove(filename)
