@@ -9,6 +9,8 @@ import time
 from Queue import Queue
 from datetime import datetime, timedelta
 
+__all__ = ['ProcessHandler']
+
 if sys.platform == 'win32':
     import ctypes, ctypes.wintypes, msvcrt
     from ctypes import sizeof, addressof, c_ulong, byref, POINTER, WinError
