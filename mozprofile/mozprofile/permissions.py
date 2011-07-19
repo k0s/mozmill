@@ -78,6 +78,9 @@ class Location(object):
         return len([i for i in self.attrs if getattr(self, i) == getattr(location, i)]) == len(self.attrs)
 
 
+    __eq__ = isEqual
+    
+
 class PermissionsManager(object):
     _num_permissions = 0
 
@@ -85,11 +88,11 @@ class PermissionsManager(object):
         self._profileDir = profileDir
         self._locations = []
         if locations:
-            if type(locations) is list:
+            if isinstance(locations, list):
                 for l in locations:
-                    self.add_hostdict(l)
-            elif type(locations) is dict:
-                self.add_hostdict(locations)
+                    self.add_host(**l)
+            elif isinstance(locations, dict):
+                self.add_host(**locations)
             elif os.path.exists(locations):
                 self.add_file(locations)
 
@@ -109,62 +112,43 @@ class PermissionsManager(object):
         permissions = {'allowXULXBL':[(location.host, 'noxul' not in location.options)]}
 
         for perm in permissions.keys():
-          for host,allow in permissions[perm]:
-            self._num_permissions += 1
-            cursor.execute("INSERT INTO moz_hosts values(?, ?, ?, ?, 0, 0)",
-                           (self._num_permissions, host, perm, 1 if allow else 2))
+            for host,allow in permissions[perm]:
+                self._num_permissions += 1
+                cursor.execute("INSERT INTO moz_hosts values(?, ?, ?, ?, 0, 0)",
+                               (self._num_permissions, host, perm, 1 if allow else 2))
 
         # Commit and close
         permDB.commit()
         cursor.close()
 
-    def add(self, newLocations): # should be *newLocations
+    def add(self, *newLocations):
 
-        found = False
         for location in newLocations:
             for loc in self._locations:
                 if loc.isEqual(location):
-                    found = True
-
-        if not found:
+                    break
+        else:
             self._locations.append(location)
             self.write_permission(location)
-        else:
-            # TODO: print warning here
-            pass
 
-    def add_host(self, host='', port='80', scheme='http', options='privileged'):
-        locations = self.add([Location(scheme, host, port, options)])
-        self.add(locations)
+        # TODO: print warning here
+        # if the location already exists we need to warn or error
 
-    def add_hostdict(self, location):
-        locations = []
-        if (not 'scheme' in location):
-            location['scheme'] = 'http'
-        if (not 'port' in location):
-            location['port'] = '80'
-        if (not 'options' in location):
-            location['options'] = 'privileged'
+    def add_host(self, host, port='80', scheme='http', options='privileged'):
+        self.add([Location(scheme, host, port, options)])
 
-        locations.append(Location(location['scheme'], location['host'], location['port'], location['options']))
-        self.add(locations)
 
     def add_file(self, path):
         """add permissions from a locations file """
-        path = os.path.abspath(path)
-        if (os.path.exists(path)):
-            self.add(self.read_locations(path))
-        else:
-            #TODO: warning/error here
-            pass
+        self.add(self.read_locations(path))
 
     def read_locations(self, filename):
         """
-            Reads the file (in the format of server-locations.txt) and add all 
-            valid locations to the self.locations array.
-
-            This is a copy from mozilla-central/build/automation.py.in
-            format: mozilla-central/build/pgo/server-locations.txt
+        Reads the file (in the format of server-locations.txt) and add all 
+        valid locations to the self.locations array.
+        
+        This is a copy from mozilla-central/build/automation.py.in
+        format: mozilla-central/build/pgo/server-locations.txt
         """
 
         locationFile = codecs.open(locationsPath, "r", "UTF-8")
@@ -172,6 +156,7 @@ class PermissionsManager(object):
         # Perhaps more detail than necessary, but it's the easiest way to make sure
         # we get exactly the format we want.  See server-locations.txt for the exact
         # format guaranteed here.
+        # TODO: use urlparse, this is crazy
         lineRe = re.compile(r"^(?P<scheme>[a-z][-a-z0-9+.]*)"
                       r"://"
                       r"(?P<host>"
@@ -190,8 +175,9 @@ class PermissionsManager(object):
         lineno = 0
         seenPrimary = False
         for line in locationFile:
+            line = line.strip()
             lineno += 1
-            if line.startswith("#") or line == "\n":
+            if line.startswith("#") or not line:
                 continue
 
             match = lineRe.match(line)
@@ -202,10 +188,10 @@ class PermissionsManager(object):
             if options:
                 options = options.split(",")
 
-            if "primary" in options:
-                if seenPrimary:
-                    raise SyntaxError(lineno, "multiple primary locations")
-                seenPrimary = True
+                if "primary" in options:
+                    if seenPrimary:
+                        raise SyntaxError(lineno, "multiple primary locations")
+                    seenPrimary = True
             else:
                 options = []
 
@@ -217,38 +203,39 @@ class PermissionsManager(object):
 
         return locations
 
-    def getNetworkPreferences(self, proxy = False):
-        """ take known locations and generate preferences to handle permissions and proxy """
+    def getNetworkPreferences(self, proxy=False):
+        """
+        take known locations and generate preferences to handle permissions and proxy
+        returns a tuple of prefs, user_prefs
+        """
 
         # Grant God-power to all the privileged servers on which tests run.
         prefs = {}
         privileged = filter(lambda loc: "privileged" in loc.options, self._locations)
         for (i, l) in itertools.izip(itertools.count(1), privileged):
-            prefs.update({"capability.principal.codebase.p%s.granted" % (i): "UniversalPreferencesWrite UniversalXPConnect UniversalPreferencesRead"})
+            prefs["capability.principal.codebase.p%s.granted" % i] = "UniversalPreferencesWrite UniversalXPConnect UniversalPreferencesRead"
 
-            #TODO: do we need the port?
-            prefs.update({"capability.principal.codebase.p%s.id" % (i): "%s" % (l.scheme + "://" + l.host)})
-            prefs.update({"capability.principal.codebase.p%s.subjectName" % (i): ""})
-            print "added p1 id + subject\n"
+            # TODO: do we need the port?
+            prefs["capability.principal.codebase.p%s.id" % i] = l.scheme + "://" + l.host
+            prefs["capability.principal.codebase.p%s.subjectName" % i] = ""
 
         user_prefs = {}
-        if (proxy):
+        if proxy:
             user_prefs.update(self.pacPrefs())
 
         return prefs, user_prefs
 
     def pacPrefs(self):
         """
-           return preferences for Proxy Auto Config.
-
-           originally taken from mozilla-central/build/automation.py.in
+        return preferences for Proxy Auto Config.
+        originally taken from mozilla-central/build/automation.py.in
         """
 
         prefs = {}
 
         # We need to proxy every server but the primary one.
         origins = ["'%s://%s:%s'" % (l.scheme, l.host, l.port)
-                  for l in filter(lambda l: "primary" not in l.options, self._locations)]
+                   for l in filter(lambda l: "primary" not in l.options, self._locations)]
         origins = ", ".join(origins)
 
         #TODO: this is not a reliable way to determine the Proxy host
@@ -258,6 +245,7 @@ class PermissionsManager(object):
                 httpPort  = l.port
                 sslPort   = 443
 
+        # TODO: this should live in a template!
         pacURL = """data:text/plain,
 function FindProxyForURL(url, host)
 {
@@ -298,8 +286,8 @@ function FindProxyForURL(url, host)
          "sslport": sslPort }
         pacURL = "".join(pacURL.splitlines())
 
-        prefs.update({"network.proxy.type": 2})
-        prefs.update({"network.proxy.autoconfig_url": "%s" % (pacURL)})
+        prefs["network.proxy.type"] = 2
+        prefs["network.proxy.autoconfig_url"] = pacURL
 
         return prefs
 
@@ -316,6 +304,3 @@ function FindProxyForURL(url, host)
         # Commit and close
         permDB.commit()
         cursor.close()
-
-if __name__ == '__main__':
-    pass
