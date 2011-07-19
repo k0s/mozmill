@@ -47,7 +47,7 @@ import codecs
 import sqlite3
 import itertools
 
-class SyntaxError(Exception):
+class LocationsSyntaxError(Exception):
     "Signifies a syntax error on a particular line in server-locations.txt."
 
     def __init__(self, lineno, msg = None):
@@ -182,7 +182,7 @@ class PermissionsManager(object):
 
             match = lineRe.match(line)
             if not match:
-                raise SyntaxError(lineno)
+                raise LocationsSyntaxError(lineno)
 
             options = match.group("options")
             if options:
@@ -190,7 +190,7 @@ class PermissionsManager(object):
 
                 if "primary" in options:
                     if seenPrimary:
-                        raise SyntaxError(lineno, "multiple primary locations")
+                        raise LocationsSyntaxError(lineno, "multiple primary locations")
                     seenPrimary = True
             else:
                 options = []
@@ -199,7 +199,7 @@ class PermissionsManager(object):
                                       match.group("port"), options))
 
         if not seenPrimary:
-            raise SyntaxError(lineno + 1, "missing primary location")
+            raise LocationsSyntaxError(lineno + 1, "missing primary location")
 
         return locations
 
