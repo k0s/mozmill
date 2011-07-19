@@ -106,16 +106,13 @@ class Profile(object):
 
     ### methods for preferences
 
-    def set_preferences(self, preferences):
+    def set_preferences(self, preferences, filename='user.js'):
         """Adds preferences dict to profile preferences"""
         
-        prefs_file = os.path.join(self.profile, 'user.js')
+        prefs_file = os.path.join(self.profile, filename)
         
-        # Ensure that the file exists first otherwise create an empty file
-        if os.path.isfile(prefs_file):
-            f = open(prefs_file, 'a+')
-        else:
-            f = open(prefs_file, 'w')
+        # append to the file
+        f = open(prefs_file, 'a')
 
         if isinstance(preferences, dict):
             # order doesn't matter
