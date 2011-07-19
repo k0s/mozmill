@@ -41,8 +41,9 @@ __all__ = ['Profile', 'FirefoxProfile', 'ThunderbirdProfile']
 
 import os
 import tempfile
-from shutil import rmtree
 from addons import AddonManager
+from permissions import PermissionsManager
+from shutil import rmtree
 
 try:
     import simplejson

@@ -42,10 +42,12 @@
 add permissions to the profile
 """
 
-import os
+__all__ = ['LocationsSyntaxError', 'Location', 'PermissionsManager']
+
 import codecs
-import sqlite3
 import itertools
+import os
+import sqlite3
 
 class LocationsSyntaxError(Exception):
     "Signifies a syntax error on a particular line in server-locations.txt."
@@ -55,7 +57,7 @@ class LocationsSyntaxError(Exception):
         self.msg = msg
 
     def __str__(self):
-        s = "Syntax error on line " + str(self.lineno)
+        s = "Syntax error on line %s" % self.lineno
         if self.msg:
             s += ": %s." % self.msg
         else:
