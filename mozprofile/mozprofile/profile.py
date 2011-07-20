@@ -70,10 +70,10 @@ class Profile(object):
             self.profile = self.create_new_profile()
 
         # set preferences
-        self.preferences = {}
         if hasattr(self.__class__, 'preferences'):
             # class preferences
             self.set_preferences(self.__class__.preferences)
+        self._preferences = preferences
         if preferences:
             # supplied preferences
             if isinstance(preferences, dict):
@@ -85,6 +85,14 @@ class Profile(object):
         else:
             preferences = []
         self.set_preferences(preferences)
+
+        # set permissions
+        self._locations = locations # store this for reconstruction
+        self.permission_manager = PermissionsManager(self.profile, self.locations)
+        prefs_js, user_js = self.permission_manager.getNetworkPreferences(self\
+.options['proxy'])
+        self.set_preferences(prefs_js, 'prefs.js', store=False)
+        self.set_preferences(user_js, store=False)
  
         # handle addon installation
         self.addon_manager = AddonManager(self.profile)
@@ -102,7 +110,8 @@ class Profile(object):
         self.__init__(profile=profile,
                       addons=self.addon_manager.addons,
                       addon_manifests=self.addon_manager.manifests,
-                      preferences=self.preferences.pop('user.js', []))
+                      preferences=self._preferences,
+                      locations=self._locations)
 
     def create_new_profile(self):
         """Create a new clean profile in tmp which is a simple empty folder"""
@@ -122,9 +131,6 @@ class Profile(object):
         if isinstance(preferences, dict):
             # order doesn't matter
             preferences = preferences.items()
-
-        # keep track of the preferences
-        self.preferences.setdefault(filename, []).extend(preferences)
 
         # write the preferences
         if preferences:
