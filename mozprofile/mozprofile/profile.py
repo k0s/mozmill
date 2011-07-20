@@ -223,6 +223,7 @@ class Profile(object):
             else:
                 self.clean_preferences()
                 self.addon_manager.clean_addons()
+                self.permission_manager.clean_permissions()
 
     __del__ = cleanup
 
