@@ -88,7 +88,7 @@ class Profile(object):
 
         # set permissions
         self._locations = locations # store this for reconstruction
-        self.permission_manager = PermissionsManager(self.profile, self.locations)
+        self.permission_manager = PermissionsManager(self.profile, locations)
         prefs_js, user_js = self.permission_manager.getNetworkPreferences(self\
 .options['proxy'])
         self.set_preferences(prefs_js, 'prefs.js', store=False)
