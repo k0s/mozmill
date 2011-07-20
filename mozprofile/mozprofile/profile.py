@@ -82,7 +82,9 @@ class Profile(object):
             # sanity check
             assert not [i for i in preferences
                         if len(i) != 2]
-            self.set_preferences(preferences)
+        else:
+            preferences = []
+        self.set_preferences(preferences)
  
         # handle addon installation
         self.addon_manager = AddonManager(self.profile)
