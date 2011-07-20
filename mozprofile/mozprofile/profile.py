@@ -88,11 +88,11 @@ class Profile(object):
 
         # set permissions
         self._locations = locations # store this for reconstruction
+        self._proxy = proxy
         self.permission_manager = PermissionsManager(self.profile, locations)
-        prefs_js, user_js = self.permission_manager.getNetworkPreferences(self\
-.options['proxy'])
-        self.set_preferences(prefs_js, 'prefs.js', store=False)
-        self.set_preferences(user_js, store=False)
+        prefs_js, user_js = self.permission_manager.getNetworkPreferences(proxy)
+        self.set_preferences(prefs_js, 'prefs.js')
+        self.set_preferences(user_js)
  
         # handle addon installation
         self.addon_manager = AddonManager(self.profile)
@@ -111,7 +111,8 @@ class Profile(object):
                       addons=self.addon_manager.addons,
                       addon_manifests=self.addon_manager.manifests,
                       preferences=self._preferences,
-                      locations=self._locations)
+                      locations=self._locations,
+                      proxy = self._proxy)
 
     def create_new_profile(self):
         """Create a new clean profile in tmp which is a simple empty folder"""
