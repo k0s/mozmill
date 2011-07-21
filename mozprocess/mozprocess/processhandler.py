@@ -1,10 +1,10 @@
-import subprocess
-import os
-import signal
-import sys
-import select
-import threading
 import logging
+import os
+import select
+import signal
+import subprocess
+import sys
+import threading
 import time
 from Queue import Queue
 from datetime import datetime, timedelta

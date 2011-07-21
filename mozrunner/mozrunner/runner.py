@@ -115,7 +115,7 @@ class Runner(object):
             else:
                 self.env['LD_LIBRARY_PATH'] = dirname
 
-        # arguments for killableprocess
+        # arguments for ProfessHandler.Process
         self.kp_kwargs = kp_kwargs or {}
 
     @classmethod
