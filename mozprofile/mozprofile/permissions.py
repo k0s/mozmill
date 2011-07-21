@@ -77,7 +77,6 @@ class Location(object):
         "compare scheme/host/port, but ignore options"
         return len([i for i in self.attrs if getattr(self, i) == getattr(location, i)]) == len(self.attrs)
 
-
     __eq__ = isEqual
     
 
