@@ -280,7 +280,7 @@ falling back to not using job objects for managing child processes"""
                             # Timeouts are expected, just keep on polling
                             continue
                         else:
-                            print >>> sys.stderr, "Error Code %s trying to query IO Completion Port, exiting" % errcode
+                            print >> sys.stderr, "Error Code %s trying to query IO Completion Port, exiting" % errcode
                             raise WinError(errcode)
                             break
 
