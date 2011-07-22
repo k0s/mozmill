@@ -139,6 +139,4 @@ class Report(object):
         return data
     except Exception, e:
         print "Sending results to '%s' failed (%s)." % (report_url, e)
-
-
     
