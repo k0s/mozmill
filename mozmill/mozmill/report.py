@@ -50,7 +50,6 @@ try:
 except:
   import simplejson as json
 
-from info import get_platform_information
 from handlers import HandlerMatchException
 
 class Report(object):
