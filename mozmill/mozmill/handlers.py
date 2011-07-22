@@ -7,7 +7,7 @@ import inspect
 import os
 
 class EventHandler(object):
-  """abstract base class for handling MozMill events"""
+    """abstract base class for handling MozMill events"""
 
     def __init__(self):
         pass
