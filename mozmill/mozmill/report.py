@@ -95,7 +95,7 @@ class Report(object):
                              "hostname": platform.node(),
                              "processor": mozinfo.processor,
                              "service_pack": getattr(mozinfo, 'service_pack', ''),
-                             "system": mozinfo.isWin and 'Windows NT' or mozinfo.os.title(),
+                             "system": mozinfo.os.title(),
                              "version": mozinfo.version
                              }
     
