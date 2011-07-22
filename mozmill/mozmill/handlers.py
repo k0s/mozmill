@@ -27,7 +27,7 @@ class EventHandler(object):
         """add options to the parser"""
 
 
-class HandlerMatchException(object):
+class HandlerMatchException(Exception):
     """
     to be raised when inappropriate arguments are passed in to a handler;
     non-fatal command-line mismatch
