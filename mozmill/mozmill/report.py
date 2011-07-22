@@ -38,6 +38,8 @@
 # ***** END LICENSE BLOCK *****
 
 import httplib
+import mozinfo
+import platform
 import sys
 import urllib
 import urlparse
@@ -90,7 +92,13 @@ class Report(object):
               }
 
     report.update(results.appinfo)
-    report['system_info'] = get_platform_information()
+    report['system_info'] = {"bits": str(mozinfo.bits),
+                             "hostname": platform.node(),
+                             "processor": mozinfo.processor,
+                             "service_pack": getattr(mozinfo, 'service_pack', ''),
+                             "system": mozinfo.isWin and 'Windows NT' or mozinfo.os.title(),
+                             "version": mozinfo.version
+                             }
     
     return report
 
