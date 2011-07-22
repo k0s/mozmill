@@ -62,21 +62,21 @@ def instantiate_handler(handler, options):
         return None
 
 def load_handler(string):
-  """
-  load a handler given a string of the format:
-  /path/to/file.py:ClassName
-  """
-  if ':' not in string:
-    raise Exception("handler string should be of the format /path/to/file.py:ClassName")
-  path, name = string.split(':', 1)
-  if not os.path.exists(path):
-    raise Exception("file '%s' does not exist" % path)
-  module = imp.load_source(path, path)
-  try:
-    handler = getattr(module, name)
-  except AttributeError:
-    raise AttributeError("module '%s' has no attribute '%s'" % (path, name))
-  return handler
+    """
+    load a handler given a string of the format:
+    /path/to/file.py:ClassName
+    """
+    if ':' not in string:
+        raise Exception("handler string should be of the format /path/to/file.py:ClassName")
+    path, name = string.split(':', 1)
+    if not os.path.exists(path):
+        raise Exception("file '%s' does not exist" % path)
+    module = imp.load_source(path, path)
+    try:
+        handler = getattr(module, name)
+    except AttributeError:
+        raise AttributeError("module '%s' has no attribute '%s'" % (path, name))
+    return handler
 
 def handlers():
     from pkg_resources import iter_entry_points
