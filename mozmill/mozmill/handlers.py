@@ -28,10 +28,10 @@ class EventHandler(object):
 
 
 class HandlerMatchException(object):
-  """
-  to be raised when inappropriate arguments are passed in to a handler;
-  non-fatal command-line mismatch
-  """
+    """
+    to be raised when inappropriate arguments are passed in to a handler;
+    non-fatal command-line mismatch
+    """
 
 
 def instantiate_handler(handler, options):
