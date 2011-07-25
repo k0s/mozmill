@@ -2,9 +2,9 @@
 
 import os
 import shutil
-import subprocess
 import tempfile
 import unittest
+from mozprocess import ProcessHandler
 from mozprofile import FirefoxProfile
 
 class TestProfilePath(unittest.TestCase):
@@ -30,13 +30,9 @@ class TestProfilePath(unittest.TestCase):
         f.close()
 
         # run mozmill on it
-        process = subprocess.Popen(['mozmill', '-t', 'test_dummy.js',
-                                    '--profile=testprofilepath'],
-                                   cwd=tempdir,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
-        code = process.wait()
+        process = ProcessHandler(['mozmill', '-t', 'test_dummy.js', '--profile=testprofilepath'],
+                                 cwd=tempdir)
+        code = process.waitForFinish(timeout=120)
         self.assertEqual(code, 0)
 
         # cleanup
