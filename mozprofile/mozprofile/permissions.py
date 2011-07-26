@@ -74,21 +74,24 @@ class Location(object):
         self.options = options
 
     def isEqual(self, location):
-        "compare scheme/host/port, but ignore options"
+        "compare scheme://host:port, but ignore options"
         return len([i for i in self.attrs if getattr(self, i) == getattr(location, i)]) == len(self.attrs)
 
     __eq__ = isEqual
 
+    def url(self):
+        return '%s://%s:%s' % (self.scheme, self.host, self.port) 
 
     def __str__(self):
-        return '%s://%s:%s - %s' % (self.scheme, self.host, self.port, self.options)
+        return  '%s  %s' % (self.url(), ','.join(self.options))
+
 
 class PermissionsManager(object):
     _num_permissions = 0
 
     def __init__(self, profileDir, locations=None):
         self._profileDir = profileDir
-        self._locations = [] # old locations for cleanup
+        self._locations = [] # for cleanup
         if locations:
             if isinstance(locations, list):
                 for l in locations:
@@ -132,16 +135,16 @@ class PermissionsManager(object):
         for location in newLocations:
             for loc in self._locations:
                 if loc.isEqual(location):
-                    print >> sys.stderr, "Duplicate location: %s" % location
+                    print >> sys.stderr, "Duplicate location: %s" % location.url()
                     break
         else:
             self._locations.append(location)
             self.write_permission(location)
 
-
     def add_host(self, host, port='80', scheme='http', options='privileged'):
+        if isinstance(options, basestring):
+            options = options.split(',')
         self.add(Location(scheme, host, port, options))
-
 
     def add_file(self, path):
         """add permissions from a locations file """
@@ -152,15 +155,12 @@ class PermissionsManager(object):
         Reads the file (in the format of server-locations.txt) and add all 
         valid locations to the self.locations array.
         
-        This is a copy from mozilla-central/build/automation.py.in
-        format: mozilla-central/build/pgo/server-locations.txt
+        This format:
+        http://mxr.mozilla.org/mozilla-central/source/build/pgo/server-locations.txt
         """
 
         locationFile = codecs.open(locationsPath, "r", "UTF-8")
 
-        # Perhaps more detail than necessary, but it's the easiest way to make sure
-        # we get exactly the format we want.  See server-locations.txt for the exact
-        # format guaranteed here.
         # TODO: use urlparse, this is crazy
         lineRe = re.compile(r"^(?P<scheme>[a-z][-a-z0-9+.]*)"
                       r"://"
@@ -232,18 +232,19 @@ class PermissionsManager(object):
 
     def pacPrefs(self):
         """
-        return preferences for Proxy Auto Config.
-        originally taken from mozilla-central/build/automation.py.in
+        return preferences for Proxy Auto Config. originally taken from
+        http://mxr.mozilla.org/mozilla-central/source/build/automation.py.in
         """
 
         prefs = {}
 
         # We need to proxy every server but the primary one.
-        origins = ["'%s://%s:%s'" % (l.scheme, l.host, l.port)
-                   for l in filter(lambda l: "primary" not in l.options, self._locations)]
+        origins = ["'%s'" % l.url()
+                   for l in self._locations
+                   if "primary" not in l.options]
         origins = ", ".join(origins)
 
-        #TODO: this is not a reliable way to determine the Proxy host
+        # TODO: this is not a reliable way to determine the Proxy host
         for l in self._locations:
             if "primary" in l.options:
                 webServer = l.host
