@@ -45,8 +45,8 @@ __all__ = ['LocationsSyntaxError', 'Location', 'PermissionsManager']
 import codecs
 import itertools
 import os
-import re
 import sqlite3
+import urlparse
 
 class LocationsSyntaxError(Exception):
     "Signifies a syntax error on a particular line in server-locations.txt."
@@ -163,47 +163,74 @@ class PermissionsManager(object):
         locationFile = codecs.open(filename, "r", "UTF-8")
 
         # TODO: use urlparse, this is crazy
-        lineRe = re.compile(r"^(?P<scheme>[a-z][-a-z0-9+.]*)"
-                      r"://"
-                      r"(?P<host>"
-                        r"\d+\.\d+\.\d+\.\d+"
-                        r"|"
-                        r"(?:[a-z0-9](?:[-a-z0-9]*[a-z0-9])?\.)*"
-                        r"[a-z](?:[-a-z0-9]*[a-z0-9])?"
-                      r")"
-                      r":"
-                      r"(?P<port>\d+)"
-                      r"(?:"
-                      r"\s+"
-                      r"(?P<options>\S+(?:,\S+)*)"
-                      r")?$")
+#         lineRe = re.compile(r"^(?P<scheme>[a-z][-a-z0-9+.]*)"
+#                       r"://"
+#                       r"(?P<host>"
+#                         r"\d+\.\d+\.\d+\.\d+"
+#                         r"|"
+#                         r"(?:[a-z0-9](?:[-a-z0-9]*[a-z0-9])?\.)*"
+#                         r"[a-z](?:[-a-z0-9]*[a-z0-9])?"
+#                       r")"
+#                       r":"
+#                       r"(?P<port>\d+)"
+#                       r"(?:"
+#                       r"\s+"
+#                       r"(?P<options>\S+(?:,\S+)*)"
+#                       r")?$")
         locations = []
         lineno = 0
         seenPrimary = False
         for line in locationFile:
             line = line.strip()
             lineno += 1
+
+            # check for comments and blank lines
             if line.startswith("#") or not line:
                 continue
 
-            match = lineRe.match(line)
-            if not match:
-                raise LocationsSyntaxError(lineno)
-
-            options = match.group("options")
-            if options:
-                options = options.split(",")
-
-                if "primary" in options:
-                    if seenPrimary:
-                        raise LocationsSyntaxError(lineno, "multiple primary locations")
-                    seenPrimary = True
-            else:
+            # split the server from the options
+            try:
+                server, options = line.rsplit(None, 1)
+                options = options.split(',')
+            except ValueError:
+                server = line
                 options = []
 
-            locations.append(Location(match.group("scheme"), match.group("host"),
-                                      match.group("port"), options))
+            # parse the server url
+            if '://' not in server:
+                server = 'http://' + server
+            scheme, netloc, path, query, fragment = urlparse.urlsplit(server)
+            # get the host and port
+            try:
+                host, port = netloc.rsplit(':', 1)
+            except ValueError:
+                host = netloc
+                port = '80'
+            try:
+                int(port)
+            except ValueError:
+                raise LocationsSyntaxError(lineno, 'bad value for port: %s' % line)
 
+#             match = lineRe.match(line)
+#             if not match:
+#                 raise LocationsSyntaxError(lineno)
+
+#            options = match.group("options")
+#            if options:
+#                options = options.split(",")
+
+            # check for primary location
+            if "primary" in options:
+                if seenPrimary:
+                    raise LocationsSyntaxError(lineno, "multiple primary locations")
+                seenPrimary = True
+#            else:
+#                options = []
+
+            # add the location
+            locations.append(Location(scheme, host, port, options))
+
+        # ensure that a primary is found
         if not seenPrimary:
             raise LocationsSyntaxError(lineno + 1, "missing primary location")
 
@@ -305,7 +332,7 @@ function FindProxyForURL(url, host)
         permDB = sqlite3.connect(os.path.join(self.profile, "permissions.sqlite"))
         cursor = permDB.cursor();
 
-        #TODO: only delete values that we add, this would require sending in the full permissions object
+        # TODO: only delete values that we add, this would require sending in the full permissions object
         cursor.execute("DROP TABLE IF EXISTS moz_hosts");
 
         # Commit and close
