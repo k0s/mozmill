@@ -162,21 +162,6 @@ class PermissionsManager(object):
 
         locationFile = codecs.open(filename, "r", "UTF-8")
 
-        # TODO: use urlparse, this is crazy
-#         lineRe = re.compile(r"^(?P<scheme>[a-z][-a-z0-9+.]*)"
-#                       r"://"
-#                       r"(?P<host>"
-#                         r"\d+\.\d+\.\d+\.\d+"
-#                         r"|"
-#                         r"(?:[a-z0-9](?:[-a-z0-9]*[a-z0-9])?\.)*"
-#                         r"[a-z](?:[-a-z0-9]*[a-z0-9])?"
-#                       r")"
-#                       r":"
-#                       r"(?P<port>\d+)"
-#                       r"(?:"
-#                       r"\s+"
-#                       r"(?P<options>\S+(?:,\S+)*)"
-#                       r")?$")
         locations = []
         lineno = 0
         seenPrimary = False
@@ -211,21 +196,11 @@ class PermissionsManager(object):
             except ValueError:
                 raise LocationsSyntaxError(lineno, 'bad value for port: %s' % line)
 
-#             match = lineRe.match(line)
-#             if not match:
-#                 raise LocationsSyntaxError(lineno)
-
-#            options = match.group("options")
-#            if options:
-#                options = options.split(",")
-
             # check for primary location
             if "primary" in options:
                 if seenPrimary:
                     raise LocationsSyntaxError(lineno, "multiple primary locations")
                 seenPrimary = True
-#            else:
-#                options = []
 
             # add the location
             locations.append(Location(scheme, host, port, options))
