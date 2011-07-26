@@ -45,6 +45,7 @@ __all__ = ['LocationsSyntaxError', 'Location', 'PermissionsManager']
 import codecs
 import itertools
 import os
+import re
 import sqlite3
 
 class LocationsSyntaxError(Exception):
@@ -159,7 +160,7 @@ class PermissionsManager(object):
         http://mxr.mozilla.org/mozilla-central/source/build/pgo/server-locations.txt
         """
 
-        locationFile = codecs.open(locationsPath, "r", "UTF-8")
+        locationFile = codecs.open(filename, "r", "UTF-8")
 
         # TODO: use urlparse, this is crazy
         lineRe = re.compile(r"^(?P<scheme>[a-z][-a-z0-9+.]*)"
