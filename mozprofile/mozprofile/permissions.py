@@ -78,14 +78,17 @@ class Location(object):
         return len([i for i in self.attrs if getattr(self, i) == getattr(location, i)]) == len(self.attrs)
 
     __eq__ = isEqual
-    
+
+
+    def __str__(self):
+        return '%s://%s:%s - %s' % (self.scheme, self.host, self.port, self.options)
 
 class PermissionsManager(object):
     _num_permissions = 0
 
     def __init__(self, profileDir, locations=None):
         self._profileDir = profileDir
-        self._locations = []
+        self._locations = [] # old locations for cleanup
         if locations:
             if isinstance(locations, list):
                 for l in locations:
@@ -96,10 +99,13 @@ class PermissionsManager(object):
                 self.add_file(locations)
 
     def write_permission(self, location):
+        """write permissions to the sqlite database"""
+        
         # Open database and create table
         permDB = sqlite3.connect(os.path.join(self._profileDir, "permissions.sqlite"))
         cursor = permDB.cursor();
-        # SQL copied from nsPermissionManager.cpp
+        # SQL copied from
+        # http://mxr.mozilla.org/mozilla-central/source/extensions/cookie/nsPermissionManager.cpp
         cursor.execute("""CREATE TABLE IF NOT EXISTS moz_hosts (
            id INTEGER PRIMARY KEY,
            host TEXT,
@@ -108,8 +114,8 @@ class PermissionsManager(object):
            expireType INTEGER,
            expireTime INTEGER)""")
 
+        # set the permissions
         permissions = {'allowXULXBL':[(location.host, 'noxul' not in location.options)]}
-
         for perm in permissions.keys():
             for host,allow in permissions[perm]:
                 self._num_permissions += 1
@@ -121,20 +127,20 @@ class PermissionsManager(object):
         cursor.close()
 
     def add(self, *newLocations):
+        """add locations to the database"""
 
         for location in newLocations:
             for loc in self._locations:
                 if loc.isEqual(location):
+                    print >> sys.stderr, "Duplicate location: %s" % location
                     break
         else:
             self._locations.append(location)
             self.write_permission(location)
 
-        # TODO: print warning here
-        # if the location already exists we need to warn or error
 
     def add_host(self, host, port='80', scheme='http', options='privileged'):
-        self.add([Location(scheme, host, port, options)])
+        self.add(Location(scheme, host, port, options))
 
 
     def add_file(self, path):
