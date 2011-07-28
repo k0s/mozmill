@@ -64,6 +64,8 @@ var ServerSocket = function(port) {
   opt.option = nspr.PR_SockOpt_NoDelay;
   nspr.PR_SetSocketOption(fd, opt.address());
 
+  dump("the quick brown fox jumped over the lazy dog");
+
   // allow local address re-use
   var opt = nsprTypes.PRSocketOptionData();
   opt.non_blocking = nspr.PR_TRUE; // same space
