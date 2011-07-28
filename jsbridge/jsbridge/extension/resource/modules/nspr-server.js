@@ -105,11 +105,7 @@ var sessions = {
 };
 
 var Server = function(port) {
-  try {
     this.server = new socket.ServerSocket(port);
-  } catch(e) {
-    log('jsbridge: Exception: ' + e);
-  }
 }
 
 Server.prototype.start = function () {
@@ -119,19 +115,14 @@ Server.prototype.start = function () {
 }
 
 Server.prototype.stop = function () {
-    //log('jsbridge: Closing...');
     this.server.close();
-    this.sessions.quit();
+    sessions.quit();
     this.server = undefined;
 }
 
 function startServer(port) {
     var server = new Server(port);
     server.start();
-}
-
-function log(msg) {
-    dump(msg + '\n');
 }
 
 var toUnicode = function(text, charset) {

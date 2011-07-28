@@ -10,11 +10,10 @@ const nsIFactory            = Components.interfaces.nsIFactory;
 const nsIModule             = Components.interfaces.nsIModule;
 const nsIWindowWatcher      = Components.interfaces.nsIWindowWatcher;
 
-// CHANGEME: to the chrome URI of your extension or application
+// chrome URI of your extension or application
 const CHROME_URI = "chrome://jsbridge/content/";
 
-// CHANGEME: change the contract id, CID, and category to be unique
-// to your application.
+// the contract id, CID, and category to be unique to your application.
 const clh_contractID = "@mozilla.org/commandlinehandler/general-startup;1?type=jsbridge";
 
 // use uuidgen to generate a unique ID
@@ -23,9 +22,6 @@ const clh_CID = Components.ID("{2872d428-14f6-11de-ac86-001f5bd9235c}");
 // category names are sorted alphabetically. Typical command-line handlers use a
 // category that begins with the letter "m".
 const clh_category = "jsbridge";
-
-var aConsoleService = Components.classes["@mozilla.org/consoleservice;1"].
-     getService(Components.interfaces.nsIConsoleService);
 
 /**
  * Utility functions
@@ -36,6 +32,7 @@ var aConsoleService = Components.classes["@mozilla.org/consoleservice;1"].
  * @param aChromeURISpec a string specifying the URI of the window to open.
  * @param aArgument an argument to pass to the window (may be null)
  */
+/* XXX I don't know if this is used at all - jhammel */
 function openWindow(aChromeURISpec, aArgument)
 {
   var ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].
@@ -43,6 +40,16 @@ function openWindow(aChromeURISpec, aArgument)
   ww.openWindow(null, aChromeURISpec, "_blank",
                 "chrome,menubar,toolbar,status,resizable,dialog=no",
                 aArgument);
+}
+
+function jsbridgeServerObserver() {
+}
+jsbridgeServerObserver.prototype = {
+    classDescription: "observes for program shutdown and stops the jsbridge socket server",
+    classID: 'TODO',
+    contractID: 'TODO',
+    QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIObserver]),
+    
 }
 
 /**
@@ -86,7 +93,6 @@ jsbridgeHandler.prototype = {
     server.startServer(parseInt(port) || 24242)
   },
 
-  // CHANGEME: change the help info as appropriate, but
   // follow the guidelines in nsICommandLineHandler.idl
   // specifically, flag descriptions should start at
   // character 24, and lines should be wrapped at
