@@ -27,41 +27,22 @@ const clh_CID = Components.ID("{2872d428-14f6-11de-ac86-001f5bd9235c}");
 // category that begins with the letter "m".
 const clh_category = "jsbridge";
 
-/**
- * Utility functions
- */
-
-/**
- * Opens a chrome window.
- * @param aChromeURISpec a string specifying the URI of the window to open.
- * @param aArgument an argument to pass to the window (may be null)
- */
-/* XXX I don't know if this is used at all - jhammel */
-function openWindow(aChromeURISpec, aArgument)
-{
-  var ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].
-    getService(Components.interfaces.nsIWindowWatcher);
-  ww.openWindow(null, aChromeURISpec, "_blank",
-                "chrome,menubar,toolbar,status,resizable,dialog=no",
-                aArgument);
-}
-
-function jsbridgeServerObserver(server) {
-    dump('in jsbridgeServerObserver(server) ctor\n');
-    this.server = server;
-}
-jsbridgeServerObserver.prototype = {
-    classDescription: "observes for program shutdown and stops the jsbridge socket server",
-    classID: Components.ID("{ab8164cb-9f14-4ccf-be5d-22a60d1ba30d}"),
-    contractID: "@mozilla.org/jsbridge-server-observer;1",
-    QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIObserver]),
-    _xpcom_categories: [{category: "quit-application", entry: 'jsbridgeserverobserver'}],
-    observe: function(aSubject, aTopic, aData) {
-        dump('in observe\n');
-        this.server.stop();
-        Services.obs.removeObserver(this, "quit-application", false);
-    }
-}
+// function jsbridgeServerObserver(server) {
+//     dump('in jsbridgeServerObserver(server) ctor\n');
+//     this.server = server;
+// }
+// jsbridgeServerObserver.prototype = {
+//     classDescription: "observes for program shutdown and stops the jsbridge socket server",
+//     classID: Components.ID("{ab8164cb-9f14-4ccf-be5d-22a60d1ba30d}"),
+//     contractID: "@mozilla.org/jsbridge-server-observer;1",
+//     QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIObserver]),
+//     _xpcom_categories: [{category: "quit-application", entry: 'jsbridgeserverobserver'}],
+//     observe: function(aSubject, aTopic, aData) {
+//         dump('in observe\n');
+//         this.server.stop();
+//         Services.obs.removeObserver(this, "quit-application", false);
+//     }
+// }
 
 function SillyFileLogger(filename) {
   this.filename = filename;
