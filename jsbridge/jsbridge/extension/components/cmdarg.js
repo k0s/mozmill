@@ -100,8 +100,8 @@ jsbridgeHandler.prototype = {
       Components.utils.import('resource://jsbridge/modules/server.js', server);
     }
       port = parseInt(port) || 24242;
-      server.startServer(port)
-      //      Services.obs.addObserver(new jsbridgeServerObserver(server.startServer(port), "quit-application", false));
+      //      server.startServer(port)
+      Services.obs.addObserver(new jsbridgeServerObserver(server.startServer(port), "quit-application", false));
   },
 
   // follow the guidelines in nsICommandLineHandler.idl
