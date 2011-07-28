@@ -55,13 +55,11 @@ function Session (client) {
   sandbox.openPreferences = hwindow.openPreferences;
 
   client.onMessage(function(data) {
-    //log("jsbridge received: " + data)
     data = toUnicode(data, "utf-8");
     Components.utils.evalInSandbox(data, sandbox);
   });
 }
 Session.prototype.send = function(string) {
-  // log("jsbridge write: " + string)
   if (typeof(string) != "string") {
     throw "jsbridge can only send strings";
   }
