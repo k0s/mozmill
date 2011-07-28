@@ -1,4 +1,5 @@
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+Components.utils.import("resource://gre/modules/Services.jsm");
 
 const nsIAppShellService    = Components.interfaces.nsIAppShellService;
 const nsISupports           = Components.interfaces.nsISupports;
@@ -50,14 +51,10 @@ jsbridgeServerObserver.prototype = {
     classID: Components.ID("{ab8164cb-9f14-4ccf-be5d-22a60d1ba30d}"),
     contractID: "@mozilla.org/jsbridge-server-observer;1",
     QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIObserver]),
-    _xpcom_categories: [{category: "quit-application"}],
+    _xpcom_categories: [{category: "quit-application", entry: 'jsbridgeserverobserver'}],
     observe: function(aSubject, aTopic, aData) {
-        switch(aTopic) {
-            // probably extraneous to have a switch statement
-        case "quit-application":
         this.server.stop();
-        break;
-        }
+        Services.obs.removeObserver(this, "quit-application", false);
     }
 }
 
@@ -99,7 +96,7 @@ jsbridgeHandler.prototype = {
            "OFFLINE TESTS WILL FAIL\n");
       Components.utils.import('resource://jsbridge/modules/server.js', server);
     }
-    this.server_observer = new jsbridgeServerObserver(server.startServer(parseInt(port) || 24242));
+    Services.obs.addObserver(new jsbridgeServerObserver(server.startServer(parseInt(port) || 24242), "application-quit", false));
   },
 
   // follow the guidelines in nsICommandLineHandler.idl
