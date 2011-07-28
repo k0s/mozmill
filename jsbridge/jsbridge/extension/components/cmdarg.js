@@ -47,7 +47,7 @@ function jsbridgeServerObserver(server) {
 }
 jsbridgeServerObserver.prototype = {
     classDescription: "observes for program shutdown and stops the jsbridge socket server",
-    classID: 'TODO',
+    classID: Components.ID("{ab8164cb-9f14-4ccf-be5d-22a60d1ba30d}"),
     contractID: "@mozilla.org/jsbridge-server-observer;1",
     QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIObserver]),
     _xpcom_categories: [{category: "quit-application"}],
