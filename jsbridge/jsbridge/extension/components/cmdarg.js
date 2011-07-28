@@ -42,14 +42,23 @@ function openWindow(aChromeURISpec, aArgument)
                 aArgument);
 }
 
-function jsbridgeServerObserver() {
+function jsbridgeServerObserver(server) {
+    this.server = server;
 }
 jsbridgeServerObserver.prototype = {
     classDescription: "observes for program shutdown and stops the jsbridge socket server",
     classID: 'TODO',
-    contractID: 'TODO',
+    contractID: "@mozilla.org/jsbridge-server-observer;1",
     QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIObserver]),
-    
+    _xpcom_categories: [{category: "quit-application"}],
+    observe: function(aSubject, aTopic, aData) {
+        switch(aTopic) {
+            // probably extraneous to have a switch statement
+        case "quit-application":
+        this.server.stop();
+        break;
+        }
+    }
 }
 
 /**
@@ -90,7 +99,7 @@ jsbridgeHandler.prototype = {
            "OFFLINE TESTS WILL FAIL\n");
       Components.utils.import('resource://jsbridge/modules/server.js', server);
     }
-    server.startServer(parseInt(port) || 24242)
+    this.server_observer = new jsbridgeServerObserver(server.startServer(parseInt(port) || 24242));
   },
 
   // follow the guidelines in nsICommandLineHandler.idl

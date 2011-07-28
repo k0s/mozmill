@@ -123,6 +123,7 @@ Server.prototype.stop = function () {
 function startServer(port) {
     var server = new Server(port);
     server.start();
+    return server;
 }
 
 var toUnicode = function(text, charset) {
