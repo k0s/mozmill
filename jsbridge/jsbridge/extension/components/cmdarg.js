@@ -44,6 +44,7 @@ function openWindow(aChromeURISpec, aArgument)
 }
 
 function jsbridgeServerObserver(server) {
+    dump('in jsbridgeServerObserver(server) ctor\n');
     this.server = server;
 }
 jsbridgeServerObserver.prototype = {
@@ -53,6 +54,7 @@ jsbridgeServerObserver.prototype = {
     QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIObserver]),
     _xpcom_categories: [{category: "quit-application", entry: 'jsbridgeserverobserver'}],
     observe: function(aSubject, aTopic, aData) {
+        dump('in observe\n');
         this.server.stop();
         Services.obs.removeObserver(this, "quit-application", false);
     }
@@ -85,6 +87,7 @@ jsbridgeHandler.prototype = {
 
   handle : function clh_handle(cmdLine)
   {
+      dump('handling command line\n');
     var port = cmdLine.handleFlagWithParam("jsbridge", false);
     var server = {};
     try {
@@ -96,7 +99,9 @@ jsbridgeHandler.prototype = {
            "OFFLINE TESTS WILL FAIL\n");
       Components.utils.import('resource://jsbridge/modules/server.js', server);
     }
-    Services.obs.addObserver(new jsbridgeServerObserver(server.startServer(parseInt(port) || 24242), "application-quit", false));
+      port = parseInt(port) || 24242;
+      //      server.startServer(port)
+      Services.obs.addObserver(new jsbridgeServerObserver(server.startServer(port), "quit-application", false));
   },
 
   // follow the guidelines in nsICommandLineHandler.idl
