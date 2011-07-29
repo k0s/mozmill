@@ -76,6 +76,7 @@ SillyFileLogger.prototype = {
 function jsbridgeHandler() {
   this.logger = new SillyFileLogger('/home/jhammel/log.txt');
   this.port = 24242;
+  this.server = null;
 }
 jsbridgeHandler.prototype = {
   classID: clh_CID,
@@ -109,6 +110,7 @@ jsbridgeHandler.prototype = {
   handle : function clh_handle(cmdLine)
   {
     self.logger.write('handling command line');
+
     var port = cmdLine.handleFlagWithParam("jsbridge", false);
     // var server = {};
     // try {
@@ -150,7 +152,7 @@ jsbridgeHandler.prototype = {
   /* internal methods */
 
   startServer: function() {
-        this.logger.write("i is in your box startine ur serverz " + this.port);
+    this.logger.write("i is in your box startine ur serverz " + this.port);
 
         server = {};
         // import the server
@@ -175,12 +177,13 @@ jsbridgeHandler.prototype = {
     },
 
   uninit: function() {
-        this.logger.write("I'm not observing this anymore");
-        Services.obs.removeObserver(this, "quit-application", false);
-        Services.obs.removeObserver(this, "sessionstore-windows-restored", false);
-        this.server.stop();
-        this.logger.write("We're done with this one");
-    }
+    this.logger.write("I'm not observing this anymore");
+    Services.obs.removeObserver(this, "quit-application", false);
+    Services.obs.removeObserver(this, "sessionstore-windows-restored", false);
+    this.server.stop();
+    this.server = null;
+    this.logger.write("We're done with this one");
+  }
 };
 
 /**
