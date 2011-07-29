@@ -110,19 +110,19 @@ jsbridgeHandler.prototype = {
   {
     self.logger.write('handling command line');
     var port = cmdLine.handleFlagWithParam("jsbridge", false);
-    var server = {};
-    try {
-      // use NSPR sockets to get offline+localhost support - needs recent js-ctypes
-      Components.utils.import('resource://jsbridge/modules/nspr-server.js', server);
-    }
-    catch(e) {
-      dump("jsbridge can't use NSPR sockets, falling back to nsIServerSocket - " +
-           "OFFLINE TESTS WILL FAIL\n");
-      Components.utils.import('resource://jsbridge/modules/server.js', server);
-    }
-      port = parseInt(port) || 24242;
-      //      server.startServer(port)
-      //      Services.obs.addObserver(new jsbridgeServerObserver(server.startServer(port), "quit-application", false));
+    // var server = {};
+    // try {
+    //   // use NSPR sockets to get offline+localhost support - needs recent js-ctypes
+    //   Components.utils.import('resource://jsbridge/modules/nspr-server.js', server);
+    // }
+    // catch(e) {
+    //   dump("jsbridge can't use NSPR sockets, falling back to nsIServerSocket - " +
+    //        "OFFLINE TESTS WILL FAIL\n");
+    //   Components.utils.import('resource://jsbridge/modules/server.js', server);
+    // }
+    //   port = parseInt(port) || 24242;
+    //   //      server.startServer(port)
+    //   //      Services.obs.addObserver(new jsbridgeServerObserver(server.startServer(port), "quit-application", false));
   },
 
   // follow the guidelines in nsICommandLineHandler.idl
