@@ -499,7 +499,7 @@ class CLI(mozrunner.CLI):
         mozrunner.CLI.__init__(self, args)
 
         # read tests from manifests (if any)
-        self.manifest = manifestparser.TestManifest(manifests=self.options.manifests)
+        self.manifest = manifestparser.TestManifest(manifests=self.options.manifests, strict=False)
 
         # expand user directory and check existence for the test
         for test in self.options.tests:

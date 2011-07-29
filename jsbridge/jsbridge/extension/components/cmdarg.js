@@ -8,6 +8,7 @@ const nsIAppShellService    = Components.interfaces.nsIAppShellService;
 const nsISupports           = Components.interfaces.nsISupports;
 const nsICategoryManager    = Components.interfaces.nsICategoryManager;
 const nsIComponentRegistrar = Components.interfaces.nsIComponentRegistrar;
+const nsIObserver           = Components.interfaces.nsIObserver;
 const nsICommandLine        = Components.interfaces.nsICommandLine;
 const nsICommandLineHandler = Components.interfaces.nsICommandLineHandler;
 const nsIFactory            = Components.interfaces.nsIFactory;
@@ -84,16 +85,16 @@ jsbridgeHandler.prototype = {
   classDescription: "jsbridgeHandler",
   _xpcom_categories: [{category: "profile-after-change", service: true},
                       {category: "command-line-handler", entry: clh_category}],
-  QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIObserver]),
-  // QueryInterface : function clh_QI(iid)
-  // {
-  //   if (iid.equals(nsICommandLineHandler) ||
-  //       iid.equals(nsIFactory) ||
-  //       iid.equals(nsISupports) ||
-  //       iid.equals(nsIObserver))
-  //     return this;
-  //   throw Components.results.NS_ERROR_NO_INTERFACE;
-  // },
+  //QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIObserver]),
+  QueryInterface : function clh_QI(iid)
+  {
+     if (iid.equals(nsIObserver) ||
+         iid.equals(nsIFactory) ||
+         iid.equals(nsISupports)||
+         iid.equals(nsICommandLineHandler))
+       return this;
+     throw Components.results.NS_ERROR_NO_INTERFACE;
+   },
 
   /* nsIObserver */
 
@@ -104,10 +105,6 @@ jsbridgeHandler.prototype = {
             this.init();
             break;
             
-        case "sessionstore-windows-restored":
-            this.startServer();
-            break;
-
         case "quit-application":
             this.uninit();
             break;
@@ -118,22 +115,15 @@ jsbridgeHandler.prototype = {
 
   handle : function clh_handle(cmdLine)
   {
-    this.logger.write('handling command line');
-    dump("FOOOOOOOOOOOOOO!OO!O!OO!O!O!OO!O!!OO!O!O");
+    this.logger.write('---handling command line---');
+    this.logger.write(cmdLine);
+    for (var i=0; i < cmdLine.length; i++) {
+        this.logger.write(': ' + cmdLine.getArgument(i));
+    }
     var port = cmdLine.handleFlagWithParam("jsbridge", false);
-    // var server = {};
-    // try {
-    //   // use NSPR sockets to get offline+localhost support - needs recent js-ctypes
-    //   Components.utils.import('resource://jsbridge/modules/nspr-server.js', server);
-    // }
-    // catch(e) {
-    //   dump("jsbridge can't use NSPR sockets, falling back to nsIServerSocket - " +
-    //        "OFFLINE TESTS WILL FAIL\n");
-    //   Components.utils.import('resource://jsbridge/modules/server.js', server);
-    // }
-    //   port = parseInt(port) || 24242;
-    //   //      server.startServer(port)
-    //   //      Services.obs.addObserver(new jsbridgeServerObserver(server.startServer(port), "quit-application", false));
+    this.logger.write('port: ' + port)
+    this.port = parseInt(port) || this.port;
+    this.startServer();
   },
 
   // follow the guidelines in nsICommandLineHandler.idl
@@ -182,13 +172,11 @@ jsbridgeHandler.prototype = {
   init: function() {
         this.logger.write("I'm observing this init function");
         Services.obs.addObserver(this, "quit-application", false);
-        Services.obs.addObserver(this, "sessionstore-windows-restored", false);
     },
 
   uninit: function() {
     this.logger.write("I'm not observing this anymore");
     Services.obs.removeObserver(this, "quit-application", false);
-    Services.obs.removeObserver(this, "sessionstore-windows-restored", false);
     this.server.stop();
     this.server = null;
     this.logger.write("We're done with this one");
