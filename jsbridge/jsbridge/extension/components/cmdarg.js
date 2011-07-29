@@ -85,6 +85,15 @@ jsbridgeHandler.prototype = {
   _xpcom_categories: [{category: "profile-after-change", service: true},
                       {category: "command-line-handler", entry: clh_category}],
   QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIObserver]),
+  // QueryInterface : function clh_QI(iid)
+  // {
+  //   if (iid.equals(nsICommandLineHandler) ||
+  //       iid.equals(nsIFactory) ||
+  //       iid.equals(nsISupports) ||
+  //       iid.equals(nsIObserver))
+  //     return this;
+  //   throw Components.results.NS_ERROR_NO_INTERFACE;
+  // },
 
   /* nsIObserver */
 
@@ -109,8 +118,8 @@ jsbridgeHandler.prototype = {
 
   handle : function clh_handle(cmdLine)
   {
-    self.logger.write('handling command line');
-
+    this.logger.write('handling command line');
+    dump("FOOOOOOOOOOOOOO!OO!O!OO!O!O!OO!O!!OO!O!O");
     var port = cmdLine.handleFlagWithParam("jsbridge", false);
     // var server = {};
     // try {
