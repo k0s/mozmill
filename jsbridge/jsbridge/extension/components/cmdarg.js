@@ -75,7 +75,7 @@ SillyFileLogger.prototype = {
  */
 function jsbridgeHandler() {
   this.logger = new SillyFileLogger('/home/jhammel/log.txt');
-  this.port = 99999;
+  this.port = 24242;
 }
 jsbridgeHandler.prototype = {
   classID: clh_CID,
@@ -95,7 +95,7 @@ jsbridgeHandler.prototype = {
             break;
             
         case "sessionstore-windows-restored":
-            this.startServer(24242);
+            this.startServer();
             break;
 
         case "quit-application":
@@ -149,8 +149,8 @@ jsbridgeHandler.prototype = {
 
   /* internal methods */
 
-  startServer: function(port) {
-        this.logger.write("i is in your box startine ur serverz");
+  startServer: function() {
+        this.logger.write("i is in your box startine ur serverz " + this.port);
 
         server = {};
         // import the server
@@ -165,8 +165,7 @@ jsbridgeHandler.prototype = {
         }
         
         // start the server
-        this.server = server.startServer(port);
-
+        this.server = server.startServer(this.port);
   },
   
   init: function() {
