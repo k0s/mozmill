@@ -70,6 +70,7 @@ SillyFileLogger.prototype = {
 
 /**
  * The XPCOM component that implements nsICommandLineHandler.
+ * It is also an event observer to shutdown the (socket) server on shutdown.
  * It also implements nsIFactory to serve as its own singleton factory.
  */
 function jsbridgeHandler() {
