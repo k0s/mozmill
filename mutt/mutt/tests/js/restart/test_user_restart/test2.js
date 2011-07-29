@@ -6,7 +6,8 @@ var setupModule = function(module) {
  * This test should pass
  */
 var testShutdownBeforeTimeout = function() {
-  controller.startUserShutdown(4000, false);
+  controller.startUserShutdown(100000, false);
   //  controller.click(new elementslib.Elem(controller.menus["file-menu"].menu_FileQuitItem));
   controller.click(new elementslib.ID(controller.window.document, "new_FileQuitItem"));
+  controller.sleep(10000);
 }

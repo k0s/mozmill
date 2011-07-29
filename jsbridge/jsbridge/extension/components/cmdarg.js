@@ -28,22 +28,6 @@ const clh_CID = Components.ID("{2872d428-14f6-11de-ac86-001f5bd9235c}");
 // category that begins with the letter "m".
 const clh_category = "jsbridge";
 
-// function jsbridgeServerObserver(server) {
-//     dump('in jsbridgeServerObserver(server) ctor\n');
-//     this.server = server;
-// }
-// jsbridgeServerObserver.prototype = {
-//     classDescription: "observes for program shutdown and stops the jsbridge socket server",
-//     classID: Components.ID("{ab8164cb-9f14-4ccf-be5d-22a60d1ba30d}"),
-//     contractID: "@mozilla.org/jsbridge-server-observer;1",
-//     QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIObserver]),
-//     _xpcom_categories: [{category: "quit-application", entry: 'jsbridgeserverobserver'}],
-//     observe: function(aSubject, aTopic, aData) {
-//         dump('in observe\n');
-//         this.server.stop();
-//         Services.obs.removeObserver(this, "quit-application", false);
-//     }
-// }
 
 function SillyFileLogger(filename) {
   this.filename = filename;
@@ -85,7 +69,7 @@ jsbridgeHandler.prototype = {
   classDescription: "jsbridgeHandler",
   _xpcom_categories: [{category: "profile-after-change", service: true},
                       {category: "command-line-handler", entry: clh_category}],
-  //QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIObserver]),
+
   QueryInterface : function clh_QI(iid)
   {
      if (iid.equals(nsIObserver) ||
