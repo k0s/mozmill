@@ -74,29 +74,18 @@ SillyFileLogger.prototype = {
  * It also implements nsIFactory to serve as its own singleton factory.
  */
 function jsbridgeHandler() {
-    this.logger = new SillyFileLogger('/home/jhammel/log.txt');
+  this.logger = new SillyFileLogger('/home/jhammel/log.txt');
+  this.port = 99999;
 }
 jsbridgeHandler.prototype = {
   classID: clh_CID,
   contractID: clh_contractID,
   classDescription: "jsbridgeHandler",
-  _xpcom_categories: [{category: "profile-after-change", service: true}],
+  _xpcom_categories: [{category: "profile-after-change", service: true},
+                      {category: "command-line-handler", entry: clh_category}],
   QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIObserver]),
 
-  /* nsISupports */
-//   QueryInterface : function clh_QI(iid)
-//   {
-//     if (iid.equals(nsICommandLineHandler) ||
-//         iid.equals(nsIFactory) ||
-//         iid.equals(nsISupports))
-//       return this;
-
-//     throw Components.results.NS_ERROR_NO_INTERFACE;
-//   },
-
   /* nsIObserver */
-  /* While creating services from category 'profile-after-change', service for entry 'jsbridge', contract ID '@mozilla.org/commandlinehandler/general-startup;1?type=jsbridge' does not implement nsIObserver.
-   */
 
   observe : function(aSubject, aTopic, aData) {
         this.logger.write('---' + aTopic + '---\n');
@@ -114,6 +103,51 @@ jsbridgeHandler.prototype = {
             break;
         }
     },
+
+  /* nsICommandLineHandler */
+
+  handle : function clh_handle(cmdLine)
+  {
+      dump('handling command line\n');
+    var port = cmdLine.handleFlagWithParam("jsbridge", false);
+    var server = {};
+    try {
+      // use NSPR sockets to get offline+localhost support - needs recent js-ctypes
+      Components.utils.import('resource://jsbridge/modules/nspr-server.js', server);
+    }
+    catch(e) {
+      dump("jsbridge can't use NSPR sockets, falling back to nsIServerSocket - " +
+           "OFFLINE TESTS WILL FAIL\n");
+      Components.utils.import('resource://jsbridge/modules/server.js', server);
+    }
+      port = parseInt(port) || 24242;
+      //      server.startServer(port)
+      //      Services.obs.addObserver(new jsbridgeServerObserver(server.startServer(port), "quit-application", false));
+  },
+
+  // follow the guidelines in nsICommandLineHandler.idl
+  // specifically, flag descriptions should start at
+  // character 24, and lines should be wrapped at
+  // 72 characters with embedded newlines,
+  // and finally, the string should end with a newline
+  helpInfo : "  -jsbridge            Port to run jsbridge on.\n",
+
+  /* nsIFactory */
+
+  createInstance : function clh_CI(outer, iid)
+  {
+    if (outer != null)
+      throw Components.results.NS_ERROR_NO_AGGREGATION;
+
+    return this.QueryInterface(iid);
+  },
+
+  lockFactory : function clh_lock(lock)
+  {
+    /* no-op */
+  },
+
+  /* internal methods */
 
   startServer: function(port) {
         this.logger.write("i is in your box startine ur serverz");
@@ -133,9 +167,8 @@ jsbridgeHandler.prototype = {
         // start the server
         this.server = server.startServer(port);
 
-        this.logger.write
   },
-
+  
   init: function() {
         this.logger.write("I'm observing this init function");
         Services.obs.addObserver(this, "quit-application", false);
@@ -148,49 +181,7 @@ jsbridgeHandler.prototype = {
         Services.obs.removeObserver(this, "sessionstore-windows-restored", false);
         this.server.stop();
         this.logger.write("We're done with this one");
-    },
-
-  /* nsICommandLineHandler */
-//   handle : function clh_handle(cmdLine)
-//   {
-//       dump('handling command line\n');
-//     var port = cmdLine.handleFlagWithParam("jsbridge", false);
-//     var server = {};
-//     try {
-//       // use NSPR sockets to get offline+localhost support - needs recent js-ctypes
-//       Components.utils.import('resource://jsbridge/modules/nspr-server.js', server);
-//     }
-//     catch(e) {
-//       dump("jsbridge can't use NSPR sockets, falling back to nsIServerSocket - " +
-//            "OFFLINE TESTS WILL FAIL\n");
-//       Components.utils.import('resource://jsbridge/modules/server.js', server);
-//     }
-//       port = parseInt(port) || 24242;
-//       //      server.startServer(port)
-//       //      Services.obs.addObserver(new jsbridgeServerObserver(server.startServer(port), "quit-application", false));
-//   },
-
-//   // follow the guidelines in nsICommandLineHandler.idl
-//   // specifically, flag descriptions should start at
-//   // character 24, and lines should be wrapped at
-//   // 72 characters with embedded newlines,
-//   // and finally, the string should end with a newline
-//   helpInfo : "  -jsbridge            Port to run jsbridge on.\n",
-
-  /* nsIFactory */
-
-  createInstance : function clh_CI(outer, iid)
-  {
-    if (outer != null)
-      throw Components.results.NS_ERROR_NO_AGGREGATION;
-
-    return this.QueryInterface(iid);
-  },
-
-  lockFactory : function clh_lock(lock)
-  {
-    /* no-op */
-  }
+    }
 };
 
 /**
