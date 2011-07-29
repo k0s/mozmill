@@ -88,7 +88,7 @@ jsbridgeHandler.prototype = {
   /* nsIObserver */
 
   observe : function(aSubject, aTopic, aData) {
-        this.logger.write('---' + aTopic + '---\n');
+        this.logger.write('---' + aTopic + '---');
         switch(aTopic) {
         case "profile-after-change":
             this.init();
@@ -108,7 +108,7 @@ jsbridgeHandler.prototype = {
 
   handle : function clh_handle(cmdLine)
   {
-      dump('handling command line\n');
+    self.logger.write('handling command line');
     var port = cmdLine.handleFlagWithParam("jsbridge", false);
     var server = {};
     try {
