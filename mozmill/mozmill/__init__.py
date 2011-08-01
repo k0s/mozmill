@@ -357,6 +357,17 @@ class MozMill(object):
                 if self.shutdownMode:
                     # if the test initiates shutdown and there are other tests
                     # signal that the runner is stopped
+                    if self.shutdownMode.get('user'):
+                        # horrible hack
+                        # see https://bugzilla.mozilla.org/show_bug.cgi?id=640435
+                        obj = {'filename': test['path'],
+                               'passed': 1,
+                               'failed': 0,
+                               'passes': [self.current_test['name']],
+                               'fails': [],
+                               'name': self.current_test['name'],
+                               'skipped': False}
+                        self.fire_event('endTest', obj)
                     started = False
                 else:
                     self.report_disconnect()
