@@ -28,38 +28,12 @@ const clh_CID = Components.ID("{2872d428-14f6-11de-ac86-001f5bd9235c}");
 // category that begins with the letter "m".
 const clh_category = "jsbridge";
 
-
-function SillyFileLogger(filename) {
-  this.filename = filename;
-  this._file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
-  this._file.initWithPath(this.filename);
-  this._fostream = Cc["@mozilla.org/network/file-output-stream;1"]
-      .createInstance(Ci.nsIFileOutputStream);
-  // Create with PR_WRITE_ONLY(0x02), PR_CREATE_FILE(0x08), PR_APPEND(0x10)
-  this._fostream.init(this._file, 0x02 | 0x08 | 0x10, 0664, 0);
-}
-SillyFileLogger.prototype = {
-  write: function(msg) {
-    if (this._fostream) {
-      var msgn = msg + "\n";
-      this._fostream.write(msgn, msgn.length);
-    }
-  },
-  close: function() {
-    if (this._fostream)
-      this._fostream.close();
-    this._fostream = null;
-    this._file = null;
-  }
-}; 
-
 /**
  * The XPCOM component that implements nsICommandLineHandler.
  * It is also an event observer to shutdown the (socket) server on shutdown.
  * It also implements nsIFactory to serve as its own singleton factory.
  */
 function jsbridgeHandler() {
-  this.logger = new SillyFileLogger('/home/jhammel/log.txt');
   this.port = 24242;
   this.server = null;
 }
@@ -83,7 +57,6 @@ jsbridgeHandler.prototype = {
   /* nsIObserver */
 
   observe : function(aSubject, aTopic, aData) {
-        this.logger.write('---' + aTopic + '---');
         switch(aTopic) {
         case "profile-after-change":
             this.init();
@@ -99,13 +72,7 @@ jsbridgeHandler.prototype = {
 
   handle : function clh_handle(cmdLine)
   {
-    this.logger.write('---handling command line---');
-    this.logger.write(cmdLine);
-    for (var i=0; i < cmdLine.length; i++) {
-        this.logger.write(': ' + cmdLine.getArgument(i));
-    }
     var port = cmdLine.handleFlagWithParam("jsbridge", false);
-    this.logger.write('port: ' + port)
     this.port = parseInt(port) || this.port;
     this.startServer();
   },
@@ -135,8 +102,6 @@ jsbridgeHandler.prototype = {
   /* internal methods */
 
   startServer: function() {
-    this.logger.write("i is in your box startine ur serverz " + this.port);
-
         server = {};
         // import the server
         try {
@@ -154,16 +119,13 @@ jsbridgeHandler.prototype = {
   },
   
   init: function() {
-        this.logger.write("I'm observing this init function");
         Services.obs.addObserver(this, "quit-application", false);
     },
 
   uninit: function() {
-    this.logger.write("I'm not observing this anymore");
     Services.obs.removeObserver(this, "quit-application", false);
     this.server.stop();
     this.server = null;
-    this.logger.write("We're done with this one");
   }
 };
 
