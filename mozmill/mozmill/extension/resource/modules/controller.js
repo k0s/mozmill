@@ -439,6 +439,13 @@ MozMillController.prototype.restartApplication = function (next, resetProfile)
                                   'restart': true,
                                   'next': next,
                                   'resetProfile': Boolean(resetProfile)});
+  frame.events.endTest(frame.events.currentTest);
+  try {
+      events.fireEvent('persist', persisted);
+  } catch(e) {
+      events.fireEvent('error', "persist serialization failed.");
+  }
+  this.collector.stopHttpd();
   utils.getMethodInWindows('goQuitApplication')();
 }
 
@@ -449,24 +456,28 @@ MozMillController.prototype.stopApplication = function (resetProfile)
   this.fireEvent('userShutdown', {'user': false,
                                   'restart': false,
                                   'resetProfile': Boolean(resetProfile)});
+  frame.events.endTest(frame.events.currentTest);
+  try {
+      events.fireEvent('persist', persisted);
+  } catch(e) {
+      events.fireEvent('error', "persist serialization failed.");
+  }
+  this.collector.stopHttpd();
   utils.getMethodInWindows('goQuitApplication')();
 }
 
 //Browser navigation functions
 MozMillController.prototype.goBack = function(){
-  //this.window.focus();
   this.window.content.history.back();
   frame.events.pass({'function':'Controller.goBack()'});
   return true;
 }
 MozMillController.prototype.goForward = function(){
-  //this.window.focus();
   this.window.content.history.forward();
   frame.events.pass({'function':'Controller.goForward()'});
   return true;
 }
 MozMillController.prototype.refresh = function(){
-  //this.window.focus();
   this.window.content.location.reload(true);
   frame.events.pass({'function':'Controller.refresh()'});
   return true;
