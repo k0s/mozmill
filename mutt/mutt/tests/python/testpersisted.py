@@ -14,6 +14,8 @@ class TestMozmillPersisted(unittest.TestCase):
     }
     
     var test_something = function() {
+    persisted.bar = 'bar';
+    persisted.number += 1;
     persisted.fleem = 2;
     %(shutdown)s
     }
@@ -27,21 +29,28 @@ class TestMozmillPersisted(unittest.TestCase):
         return path
 
     def test_persisted(self):
-        passes = 1
         path = self.make_test()
         m = mozmill.MozMill.create()
         m.persisted['foo'] = 'bar'
+        m.persisted['bar'] = 'foo'
+        m.persisted['number'] = 1
         results = m.run(dict(path=path))
-        self.assertTrue(len(results.passes) == passes)
-        print m.persisted
+        self.assertTrue(len(results.passes) == 1)
+        self.inspect_persisted(m.persisted)
 
     def test_persisted_shutdown(self):
         path = self.make_test(shutdown='controller.stopApplication();')
         m = mozmill.MozMill.create()
         m.persisted['foo'] = 'bar'
+        m.persisted['bar'] = 'foo'
+        m.persisted['number'] = 1
         results = m.run(dict(path=path))
-        print m.persisted
-        
+        self.assertTrue(len(results.passes) == 1)
+        self.inspect_persisted(m.persisted)
+
+    def inspect_persisted(self, persisted):
+        """inspect the persisted data following the test"""
+        self.assertTrue(persisted == {u'fleem': 2, u'foo': u'bar', u'bar': u'bar', u'number': 2})
 
 if __name__ == '__main__':
     unittest.main()
