@@ -439,13 +439,12 @@ MozMillController.prototype.restartApplication = function (next, resetProfile)
                                   'restart': true,
                                   'next': next,
                                   'resetProfile': Boolean(resetProfile)});
-  events.fireEvent('persist', persisted);
   frame.events.endTest(frame.events.currentTest);
-//   try {
-//       events.fireEvent('persist', persisted);
-//   } catch(e) {
-//       events.fireEvent('error', "persist serialization failed.");
-//   }
+  try {
+      this.fireEvent('persist', frame.persisted);
+  } catch(e) {
+      this.fireEvent('error', 'persist serialization failed');
+  }
   utils.getMethodInWindows('goQuitApplication')();
 }
 
@@ -456,13 +455,12 @@ MozMillController.prototype.stopApplication = function (resetProfile)
   this.fireEvent('userShutdown', {'user': false,
                                   'restart': false,
                                   'resetProfile': Boolean(resetProfile)});
-  events.fireEvent('persist', persisted);
   frame.events.endTest(frame.events.currentTest);
-//   try {
-//       events.fireEvent('persist', persisted);
-//   } catch(e) {
-//       events.fireEvent('error', "persist serialization failed.");
-//   }
+  try {
+      this.fireEvent('persist', frame.persisted);
+  } catch(e) {
+      this.fireEvent('error', 'persist serialization failed');
+  }
   utils.getMethodInWindows('goQuitApplication')();
 }
 
