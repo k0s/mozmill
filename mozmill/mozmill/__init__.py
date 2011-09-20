@@ -22,6 +22,7 @@
 #  Mikeal Rogers <mikeal.rogers@gmail.com>
 #  Henrik Skupin <hskupin@mozilla.com>
 #  Clint Talbert <ctalbert@mozilla.com>
+#  David Burns
 #
 # Alternatively, the contents of this file may be used under the terms of
 # either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -66,7 +67,6 @@ package_metadata = get_metadata_from_egg('mozmill')
 
 # defaults
 ADDONS = [extension_path, jsbridge.extension_path]
-JSBRIDGE_PORT = 24242
 JSBRIDGE_TIMEOUT = 60. # timeout for jsbridge
 
 class TestResults(object):
@@ -133,7 +133,7 @@ class MozMill(object):
     """
 
     @classmethod
-    def create(cls, results=None, jsbridge_port=JSBRIDGE_PORT, jsbridge_timeout=JSBRIDGE_TIMEOUT, handlers=(),
+    def create(cls, results=None, jsbridge_port=None, jsbridge_timeout=JSBRIDGE_TIMEOUT, handlers=(),
                app='firefox', profile_args=None, runner_args=None):
       
         # select runner and profile class for the given app
@@ -141,12 +141,14 @@ class MozMill(object):
             runner_class = mozrunner.runners[app]
         except KeyError:
             raise NotImplementedError('Application "%s" unknown (should be one of %s)' % (app, mozrunner.runners.keys()))
-          
+        
         # get the necessary arguments to construct the profile and runner instance
         profile_args = profile_args or {}
         runner_args = runner_args or {}
         profile_args.setdefault('addons', []).extend(ADDONS)
         cmdargs = runner_args.setdefault('cmdargs', [])
+        if not jsbridge_port:
+            jsbridge_port = self.free_port()
         if '-jsbridge' not in cmdargs:
             cmdargs += ['-jsbridge', '%d' % jsbridge_port]
         runner_args['profile_args'] = profile_args
@@ -157,7 +159,7 @@ class MozMill(object):
         # create a mozmill
         return cls(runner, results=results, jsbridge_port=jsbridge_port, jsbridge_timeout=jsbridge_timeout, handlers=handlers)
 
-    def __init__(self, runner, results=None, jsbridge_port=JSBRIDGE_PORT, jsbridge_timeout=JSBRIDGE_TIMEOUT, handlers=()):
+    def __init__(self, runner, results=None, jsbridge_port=None, jsbridge_timeout=JSBRIDGE_TIMEOUT, handlers=()):
         """
         - runner : a MozRunner instance to run the app
         - results : a TestResults instance to accumulate results
@@ -173,7 +175,10 @@ class MozMill(object):
         self.results = results or TestResults()
 
         # jsbridge parameters
+        if not jsbridge_port:
+            jsbridge_port = self.free_port()
         self.jsbridge_port = jsbridge_port
+
         self.jsbridge_timeout = jsbridge_timeout
         self.bridge = self.back_channel = None
 
@@ -469,6 +474,15 @@ class MozMill(object):
         # cleanup 
         if self.runner is not None:
             self.runner.cleanup()
+    
+    @classmethod
+    def free_port(self):
+        free_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        free_socket.bind(('127.0.0.1', 0))
+        port = free_socket.getsockname()[1]
+        free_socket.close()
+        return port
+        
 
 
 ### method for test collection
@@ -579,7 +593,7 @@ class CLI(mozrunner.CLI):
                          help="debug mode",
                          default=False)
         group.add_option('-P', '--port', dest="port", type="int",
-                         default=JSBRIDGE_PORT,
+                         default=None,
                          help="TCP port to run jsbridge on.")
         group.add_option('--list-tests', dest='list_tests',
                          action='store_true', default=False,
@@ -625,7 +639,10 @@ class CLI(mozrunner.CLI):
         if self.options.debug and '-jsconsole' not in cmdargs:
             cmdargs.append('-jsconsole')
         if '-jsbridge' not in cmdargs:
-            cmdargs += ['-jsbridge', '%d' % self.options.port]
+            port = self.options.port
+            if not port:
+                port = MozMill.free_port()
+            cmdargs += ['-jsbridge', '%d' % port]
         if '-foreground' not in cmdargs:
             cmdargs.append('-foreground')
         return cmdargs
