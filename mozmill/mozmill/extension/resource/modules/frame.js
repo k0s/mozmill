@@ -589,7 +589,7 @@ Runner.prototype.runTestModule = function (module) {
   module.__status__ = 'done';
 }
 
-var runTestFile = function (filename, invokedFromIDE, name) {
+var runTestFile = function (filename, invokedFromIDE, name, data) {
   var runner = new Runner(new Collector(), invokedFromIDE);
   runner.runTestFile(filename, name);
   runner.end();
