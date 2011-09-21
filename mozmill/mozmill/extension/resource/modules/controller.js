@@ -984,6 +984,7 @@ MozMillController.prototype.keypress = function(aTarget, aKey, aModifiers, aExpe
 }
 
 MozMillController.prototype.type = function (aTarget, aText, aExpectedEvent) {
+  if (aTarget == null) { aTarget = this.windowElement(); }
   return aTarget.sendKeys(aText, aExpectedEvent);
 }
 
