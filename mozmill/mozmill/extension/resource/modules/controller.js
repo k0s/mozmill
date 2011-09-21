@@ -985,10 +985,16 @@ MozMillController.prototype.keypress = function(aTarget, aKey, aModifiers, aExpe
 
 MozMillController.prototype.type = function (aTarget, aText, aExpectedEvent) {
   if (aTarget == null) { aTarget = this.windowElement(); }
+
+  Array.forEach(aText, function(letter) {
+    this.keypress(aTarget, letter, {}, aExpectedEvent);
+  });
+
   return aTarget.sendKeys(aText, aExpectedEvent);
 }
 
 MozMillController.prototype.mouseEvent = function(aTarget, aOffsetX, aOffsetY, aEvent, aExpectedEvent) {
+  if (aTarget == null) { aTarget = this.windowElement(); }
   return aTarget.mouseEvent(aOffsetX, aOffsetY, aEvent, aExpectedEvent);
 }
 
