@@ -997,7 +997,6 @@ MozMillController.prototype.type = function (aTarget, aText, aExpectedEvent) {
 }
 
 MozMillController.prototype.mouseEvent = function(aTarget, aOffsetX, aOffsetY, aEvent, aExpectedEvent) {
-  if (aTarget == null) { aTarget = this.windowElement(); }
   return aTarget.mouseEvent(aOffsetX, aOffsetY, aEvent, aExpectedEvent);
 }
 
