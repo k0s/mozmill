@@ -50,7 +50,7 @@ class ProcessHandler(object):
             # Parameter for whether or not we should attempt to track child processes
             self._ignore_children = ignore_children
 
-            if (not self._ignore_children and not mozinfo.isWin):
+            if not self._ignore_children and not mozinfo.isWin:
                 # Set the process group id for linux systems
                 # Sets process group id to the pid of the parent process
                 # NOTE: This prevents you from using preexec_fn and managing 
@@ -461,23 +461,28 @@ falling back to not using job objects for managing child processes"""
                  cmd,
                  args=None,
                  cwd=None,
-                 env = os.environ,
+                 env=os.environ.copy(),
                  ignore_children = False,
-                 logname = None,
+                 logname=None,
+                 processOutputLine=(lambda line: sys.stdout.write(line),),
+                 onTimeout=(),
+                 onFinish=(),
                  **kwargs):
-        """ Process Manager Class
-            cmd = Command to run (defaults to None)
-            args = array of arguments (defaults to None)
-            cwd = working directory for cmd (defaults to None)
-            env = environment to use for the process (defaults to os.environ)
-            ignore_children = when True, causes system to ignore child processes,
-                              defaults to False (which tracks child processes)
-            kwargs = keyword args to pass directly into Popen
-            
-            NOTE: Child processes will be tracked by default.  If for any reason
-            we are unable to track child processes and ignore_children is set to False,
-            then we will fall back to only tracking the root process.  The fallback
-            will be logged.
+        """
+        cmd = Command to run (defaults to None)
+        args = array of arguments (defaults to None)
+        cwd = working directory for cmd (defaults to None)
+        env = environment to use for the process (defaults to os.environ)
+        ignore_children = when True, causes system to ignore child processes,
+        defaults to False (which tracks child processes)
+        processOutputLine = handlers to process the output line
+        onTimeout = handlers 
+        kwargs = keyword args to pass directly into Popen
+        
+        NOTE: Child processes will be tracked by default.  If for any reason
+        we are unable to track child processes and ignore_children is set to False,
+        then we will fall back to only tracking the root process.  The fallback
+        will be logged.
         """
         self.cmd = cmd
         self.args = args
@@ -487,6 +492,11 @@ falling back to not using job objects for managing child processes"""
         self._output = []
         self._ignore_children = ignore_children
         self.keywordargs = kwargs
+
+        # handlers
+        self.processOutputLineHandlers = list(processOutputLine)
+        self.onTimeoutHandlers = list(onTimeout)
+        self.onFinishHandlers = list(onFinish)
 
         # It is common for people to pass in the entire array with the cmd and
         # the args together since this is how Popen uses it.  Allow for that.
@@ -519,10 +529,10 @@ falling back to not using job objects for managing child processes"""
         self.ouptut = []
         self.startTime = datetime.now()
         self.proc = self.Process(self.cmd,
-                                 stdout = subprocess.PIPE,
-                                 stderr = subprocess.STDOUT,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT,
                                  cwd=self.cwd,
-                                 env = self.env,
+                                 env=self.env,
                                  ignore_children = self._ignore_children,
                                  **self.keywordargs)
 
@@ -556,17 +566,20 @@ falling back to not using job objects for managing child processes"""
     def processOutputLine(self, line):
         """Called for each line of output that a process sends to stdout/stderr.
         """
-        pass 
+        for handler in self.processOutputLineHandlers:
+            handler(line)
 
     def onTimeout(self):
         """Called when a process times out."""
-        pass
+        for handler in self.onTimeoutHandlers:
+            handler()
 
     def onFinish(self):
         """Called when a process finishes without a timeout."""
-        pass
+        for handler in self.onFinishHandlers:
+            handler()
 
-    def waitForFinish(self, timeout=None, outputTimeout=None, storeOutput=True, logfile=None):
+    def waitForFinish(self, timeout=None, outputTimeout=None, storeOutput=True, logfile=None, stdout=True):
         """Handle process output until the process terminates or times out.
     
            If timeout is not None, the process will be allowed to continue for
@@ -581,6 +594,8 @@ falling back to not using job objects for managing child processes"""
        
            If logfile is not None, the output produced by the process will be 
            appended to the given file.
+
+           If stdout is True, then the output will go to stdout
         """
 
         if not hasattr(self, 'proc'):
@@ -621,9 +636,9 @@ falling back to not using job objects for managing child processes"""
         status = self.proc.wait()
         return status
 
-    """
-      Private Functions From here on down. Thar be dragons.
-    """
+
+    ### Private methods from here on down. Thar be dragons.
+
     if mozinfo.isWin:
         # Windows Specific private functions are defined in this block
         PeekNamedPipe = ctypes.windll.kernel32.PeekNamedPipe
