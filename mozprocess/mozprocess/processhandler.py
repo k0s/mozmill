@@ -10,7 +10,7 @@ import time
 from Queue import Queue
 from datetime import datetime, timedelta
 
-__all__ = ['ProcessHandler', 'ProcessHandlerFrontEnd']
+__all__ = ['ProcessHandlerMixin', 'ProcessHandler']
 
 if mozinfo.isWin:
     import ctypes, ctypes.wintypes, msvcrt
@@ -18,7 +18,7 @@ if mozinfo.isWin:
     import winprocess
     from qijo import JobObjectAssociateCompletionPortInformation, JOBOBJECT_ASSOCIATE_COMPLETION_PORT
  
-class ProcessHandler(object):
+class ProcessHandlerMixin(object):
     """Class which represents a process to be executed."""
 
     class Process(subprocess.Popen):
@@ -510,11 +510,6 @@ falling back to not using job objects for managing child processes"""
         return self.didTimeout
 
     @property
-    def output(self):
-        """Gets the output of the process."""
-        return self._output
-
-    @property
     def commandline(self):
         """the string value of the command line"""
         return subprocess.list2cmdline([self.cmd] + self.args)
@@ -524,7 +519,6 @@ falling back to not using job objects for managing child processes"""
            process to complete.
         """
         self.didTimeout = False
-        self.ouptut = []
         self.startTime = datetime.now()
         self.proc = self.Process(self.cmd,
                                  stdout=subprocess.PIPE,
@@ -695,7 +689,7 @@ class LogOutput(object):
 
 ### front end class with the default handlers
 
-class ProcessHandlerFrontEnd(ProcessHandler):
+class ProcessHandler(ProcessHandlerMixin):
 
     def __init__(self, cmd, logfile=None, storeOutput=True, **kwargs):
         """
@@ -716,6 +710,6 @@ class ProcessHandlerFrontEnd(ProcessHandler):
         if storeOutput:
             storeoutput = StoreOutput()
             self.output = storeoutput.output
-            kwargs['processOutputLine'].append(logoutput)
+            kwargs['processOutputLine'].append(storeoutput)
 
-        ProcessHandler.__init__(self, cmd, **kwargs)
+        ProcessHandlerMixin.__init__(self, cmd, **kwargs)
