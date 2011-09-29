@@ -10,7 +10,7 @@ import time
 from Queue import Queue
 from datetime import datetime, timedelta
 
-__all__ = ['ProcessHandler']
+__all__ = ['ProcessHandler', 'ProcessHandlerFrontEnd']
 
 if mozinfo.isWin:
     import ctypes, ctypes.wintypes, msvcrt
@@ -463,20 +463,19 @@ falling back to not using job objects for managing child processes"""
                  cwd=None,
                  env=os.environ.copy(),
                  ignore_children = False,
-                 logname=None,
-                 processOutputLine=(lambda line: sys.stdout.write(line),),
+                 processOutputLine=(),
                  onTimeout=(),
                  onFinish=(),
                  **kwargs):
         """
-        cmd = Command to run (defaults to None)
+        cmd = Command to run
         args = array of arguments (defaults to None)
         cwd = working directory for cmd (defaults to None)
         env = environment to use for the process (defaults to os.environ)
         ignore_children = when True, causes system to ignore child processes,
         defaults to False (which tracks child processes)
         processOutputLine = handlers to process the output line
-        onTimeout = handlers 
+        onTimeout = handlers for timeout event
         kwargs = keyword args to pass directly into Popen
         
         NOTE: Child processes will be tracked by default.  If for any reason
@@ -489,7 +488,6 @@ falling back to not using job objects for managing child processes"""
         self.cwd = cwd
         self.env = env
         self.didTimeout = False
-        self._output = []
         self._ignore_children = ignore_children
         self.keywordargs = kwargs
 
@@ -579,23 +577,16 @@ falling back to not using job objects for managing child processes"""
         for handler in self.onFinishHandlers:
             handler()
 
-    def waitForFinish(self, timeout=None, outputTimeout=None, storeOutput=True, logfile=None, stdout=True):
-        """Handle process output until the process terminates or times out.
-    
-           If timeout is not None, the process will be allowed to continue for
-           that number of seconds before being killed.
+    def waitForFinish(self, timeout=None, outputTimeout=None):
+        """
+        Handle process output until the process terminates or times out.
+        
+        If timeout is not None, the process will be allowed to continue for
+        that number of seconds before being killed.
        
-           If outputTimeout is not None, the process will be allowed to continue
-           for that number of seconds without producing any output before
-           being killed.
-       
-           If storeOutput=True, the output produced by the process will be saved
-           as self.output.
-       
-           If logfile is not None, the output produced by the process will be 
-           appended to the given file.
-
-           If stdout is True, then the output will go to stdout
+        If outputTimeout is not None, the process will be allowed to continue
+        for that number of seconds without producing any output before
+        being killed.
         """
 
         if not hasattr(self, 'proc'):
@@ -610,22 +601,13 @@ falling back to not using job objects for managing child processes"""
         elif outputTimeout:
             lineReadTimeout = outputTimeout
 
-        if logfile is not None:
-            log = open(logfile, 'a')
-
         (line, self.didTimeout) = self.readWithTimeout(logsource, lineReadTimeout)
         while line != "" and not self.didTimeout:
-            if storeOutput:
-                self._output.append(line.rstrip())
-            if logfile is not None:
-                log.write(line)
             self.processOutputLine(line)
             if timeout:
                 lineReadTimeout = timeout - (datetime.now() - self.startTime).seconds
             (line, self.didTimeout) = self.readWithTimeout(logsource, lineReadTimeout)
 
-        if logfile is not None:
-            log.close()
 
         if self.didTimeout:
             self.proc.kill()
@@ -677,3 +659,63 @@ falling back to not using job objects for managing child processes"""
             if len(r) == 0:
                 return ('', True)
             return (f.readline(), False)
+
+
+### default output handlers
+### these should be callables that take the output line
+
+def print_output(line):
+    print line
+
+class StoreOutput(object):
+    """accumulate stdout"""
+
+    def __init__(self):
+        self.output = []
+
+    def __call__(self, line):
+        self.output.append(line.rstrip())
+
+class LogOutput(object):
+    """pass output to a file"""
+
+    def __init__(self, filename):
+        self.filename = filename
+        self.file = None
+
+    def __call__(self, line):
+        if self.file is None:
+            self.file = file(self.filename, 'a')
+        self.file.write(line)
+        self.file.flush()
+
+    def __del__(self):
+        if self.file is not None:
+            self.file.close()
+
+### front end class with the default handlers
+
+class ProcessHandlerFrontEnd(ProcessHandler):
+
+    def __init__(self, cmd, logfile=None, storeOutput=True, **kwargs):
+        """
+        If storeOutput=True, the output produced by the process will be saved
+        as self.output.
+       
+        If logfile is not None, the output produced by the process will be 
+        appended to the given file.
+        """
+
+        kwargs.setdefault('processOutputLine', []).append(print_output)
+
+        if logfile:
+            logoutput = LogOutput(logfile)
+            kwargs['processOutputLine'].append(logoutput)
+
+        self.output = None
+        if storeOutput:
+            storeoutput = StoreOutput()
+            self.output = storeoutput.output
+            kwargs['processOutputLine'].append(logoutput)
+
+        ProcessHandler.__init__(self, cmd, **kwargs)
