@@ -597,7 +597,7 @@ falling back to not using job objects for managing child processes"""
 
         (line, self.didTimeout) = self.readWithTimeout(logsource, lineReadTimeout)
         while line != "" and not self.didTimeout:
-            self.processOutputLine(line)
+            self.processOutputLine(line.rstrip())
             if timeout:
                 lineReadTimeout = timeout - (datetime.now() - self.startTime).seconds
             (line, self.didTimeout) = self.readWithTimeout(logsource, lineReadTimeout)
@@ -668,7 +668,7 @@ class StoreOutput(object):
         self.output = []
 
     def __call__(self, line):
-        self.output.append(line.rstrip())
+        self.output.append(line)
 
 class LogOutput(object):
     """pass output to a file"""
@@ -680,7 +680,7 @@ class LogOutput(object):
     def __call__(self, line):
         if self.file is None:
             self.file = file(self.filename, 'a')
-        self.file.write(line)
+        self.file.write(line + '\n')
         self.file.flush()
 
     def __del__(self):
