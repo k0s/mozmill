@@ -45,6 +45,7 @@ var strings = {}; Components.utils.import('resource://mozmill/stdlib/strings.js'
 var arrays = {};  Components.utils.import('resource://mozmill/stdlib/arrays.js', arrays);
 var withs = {};   Components.utils.import('resource://mozmill/stdlib/withs.js', withs);
 var utils = {};   Components.utils.import('resource://mozmill/modules/utils.js', utils);
+var broker = {};  Components.utils.import('resource://mozmill/modules/msgbroker.js', broker);
 var securableModule = {};  Components.utils.import('resource://mozmill/stdlib/securable-module.js', securableModule);
 
 var aConsoleService = Components.classes["@mozilla.org/consoleservice;1"].
@@ -349,6 +350,38 @@ events.persist = function() {
 var log = function (obj) {
   events.fireEvent('log', obj);
 }
+
+// Message listener which receives incoming messages from the driver
+// This is basically a front end to events.
+function MozmillMsgListener() {}
+MozmillMsgListener.prototype.pass = function(obj) { events.pass(obj); }
+MozmillMsgListener.prototype.fail = function(obj) { events.fail(obj); }
+MozmillMsgListener.prototype.log  = function(obj) { log(obj); }
+MozmillMsgListener.prototype.persist  = function(obj) { events.persist() }
+MozmillMsgListener.prototype.endTest  = function(obj) { events.endTest(events.currentTest); }
+MozmillMsgListener.prototype.screenShot = function(obj) { 
+  // Find the name of the test function
+  for (var attr in events.currentModule) {
+    if (events.currentModule[attr] == events.currentTest) {
+      var testName = attr;
+      break;
+    }
+  }
+  obj['test_file'] = events.currentModule.__file__;
+  obj['test_name'] = testName;
+  events.fireEvent(msgType, obj);
+}
+MozmillMsgListener.prototype.userShutdown = function(obj) { 
+  events.toggleUserShutdown(obj);
+  events.fireEvent(msgType, obj);
+}
+MozmillMsgListener.prototype.firePythonCallback = function(obj) {
+  obj['test'] = events.currentModule.__file__;
+  events.fireEvent(msgType, obj);
+}
+
+// Register the listener
+broker.addObject(new MozmillMsgListener());
 
 try {
   var jsbridge = {}; Components.utils.import('resource://jsbridge/modules/events.js', jsbridge);
