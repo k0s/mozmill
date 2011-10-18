@@ -36,7 +36,7 @@ function sendMessage(msgType, obj) {
     return;
   }
   for (let i = 0; i < listeners[msgType].length; ++i) {
-    listeners[i](msgType, obj);
+    listeners[msgType][i](obj);
   }
 }
 

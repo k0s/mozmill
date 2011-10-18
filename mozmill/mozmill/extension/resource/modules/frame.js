@@ -203,6 +203,10 @@ events.toggleUserShutdown = function (obj){
 events.isUserShutdown = function () {
   return Boolean(this.userShutdown);
 }
+events.startUserShutdown = function(obj) {
+  events.toggleUserShutdown(obj);
+  events.fireEvent('userShutdown', obj);
+}
 events.setTest = function (test, invokedFromIDE) {
   test.__passes__ = [];
   test.__fails__ = [];
@@ -215,6 +219,11 @@ events.setTest = function (test, invokedFromIDE) {
   events.fireEvent('setTest', obj);
 }
 events.endTest = function (test) {
+  // use the current test unless specified
+  if (test === undefined) {
+    test = events.currentTest;
+  }  
+
   // report the end of a test
   test.status = 'done';
   events.currentTest = null; 
@@ -340,26 +349,17 @@ events.removeListener = function(listener) {
   }
 }
 events.persist = function() {
-    try {
-        this.fireEvent('persist', persisted);
-    } catch(e) {
-        this.fireEvent('error', "persist serialization failed.")
-    }
+  try {
+    events.fireEvent('persist', persisted);
+  } catch(e) {
+    events.fireEvent('error', "persist serialization failed.")
+  }
 }
-
-var log = function (obj) {
-  events.fireEvent('log', obj);
+events.firePythonCallback = function(obj) {
+  obj['test'] = events.currentModule.__file__;
+  events.fireEvent('firePythonCallback', obj);
 }
-
-// Message listener which receives incoming messages from the driver
-// This is basically a front end to events.
-function MozmillMsgListener() {}
-MozmillMsgListener.prototype.pass = function(obj) { events.pass(obj); }
-MozmillMsgListener.prototype.fail = function(obj) { events.fail(obj); }
-MozmillMsgListener.prototype.log  = function(obj) { log(obj); }
-MozmillMsgListener.prototype.persist  = function(obj) { events.persist() }
-MozmillMsgListener.prototype.endTest  = function(obj) { events.endTest(events.currentTest); }
-MozmillMsgListener.prototype.screenShot = function(obj) { 
+events.screenShot = function(obj) { 
   // Find the name of the test function
   for (var attr in events.currentModule) {
     if (events.currentModule[attr] == events.currentTest) {
@@ -369,19 +369,23 @@ MozmillMsgListener.prototype.screenShot = function(obj) {
   }
   obj['test_file'] = events.currentModule.__file__;
   obj['test_name'] = testName;
-  events.fireEvent(msgType, obj);
-}
-MozmillMsgListener.prototype.userShutdown = function(obj) { 
-  events.toggleUserShutdown(obj);
-  events.fireEvent(msgType, obj);
-}
-MozmillMsgListener.prototype.firePythonCallback = function(obj) {
-  obj['test'] = events.currentModule.__file__;
-  events.fireEvent(msgType, obj);
+  events.fireEvent('screenShot', obj);
 }
 
-// Register the listener
-broker.addObject(new MozmillMsgListener());
+var log = function (obj) {
+  events.fireEvent('log', obj);
+}
+
+// Register the listeners
+broker.addObject({'pass': events.pass,
+                  'fail': events.fail,
+                  'log': log,
+                  'persist': events.persist,
+                  'endTest': events.endTest,
+                  'userShutdown': events.startUserShutdown,
+                  'firePythonCallback': events.firePythonCallback,
+                  'screenShot': events.screenShot
+});
 
 try {
   var jsbridge = {}; Components.utils.import('resource://jsbridge/modules/events.js', jsbridge);
